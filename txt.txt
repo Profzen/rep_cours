@@ -643,4 +643,4 @@ git remote add origin https://github.com/Profzen/Rep-cours.git
 git push -u origin main
 
 git config --global user.email "Profzzen@gmail.com"
-git config --global user.name "Profzen"
+git config --global user.name "Profzen" 
