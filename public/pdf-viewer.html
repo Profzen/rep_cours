@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Visualiseur PDF — Rep Cours</title>
+  <style>
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial}
+    .top { display:flex; align-items:center; gap:12px; padding:12px 16px; background:#03243f; color:#fff; }
+    .container { height: calc(100% - 56px); display:flex; flex-direction:column; }
+    .viewer { flex:1; background:#f3f6fb; display:flex; align-items:center; justify-content:center; }
+    iframe, object { width:100%; height:100%; border:0; }
+    .fallback { padding:12px; text-align:center; background:#fff; border-top:1px solid #eee; }
+    a.button { display:inline-block; padding:10px 14px; border-radius:10px; background:#0d6efd; color:#fff; text-decoration:none; font-weight:700; }
+    @media (max-width:600px){ .top { font-size:14px } }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div style="font-weight:900">Rep Cours — Visualiseur PDF</div>
+    <div style="margin-left:auto"><a href="index.html" style="color:#fff;text-decoration:underline">Accueil</a></div>
+  </div>
+
+  <div class="container">
+    <div class="viewer" id="viewer">
+      <div style="text-align:center;color:#6b7c90">
+        Chargement du document…
+      </div>
+    </div>
+
+    <div class="fallback" id="fallback" style="display:none">
+      <div style="margin-bottom:8px">Si le document ne s'affiche pas, téléchargez-le via le lien ci-dessous :</div>
+      <a id="raw-link" class="button" href="#" target="_blank" rel="noopener">Télécharger le fichier</a>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      function getParam(name){
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+      }
+      const src = getParam('src') || '';
+      const viewer = document.getElementById('viewer');
+      const fallback = document.getElementById('fallback');
+      const rawLink = document.getElementById('raw-link');
+
+      if (!src) {
+        viewer.innerHTML = '<div style="color:#b33">Aucun document fourni.</div>';
+        return;
+      }
+
+      // Try embedding using <object> (works for many PDF endpoints)
+      try {
+        // prefer object to keep browser pdf viewer features
+        const obj = document.createElement('object');
+        obj.type = 'application/pdf';
+        obj.data = src;
+        obj.width = '100%';
+        obj.height = '100%';
+        obj.innerHTML = '<p>Votre navigateur ne supporte pas l\'aperçu PDF. <a href="' + src + '" target="_blank">Ouvrir le fichier</a></p>';
+        viewer.innerHTML = '';
+        viewer.appendChild(obj);
+
+        // show fallback if object fails to load after a short timeout
+        let loaded = false;
+        obj.addEventListener('load', () => { loaded = true; fallback.style.display = 'none'; });
+        // set fallback link anyway
+        rawLink.href = src;
+        fallback.style.display = 'block';
+
+        // Also try iframe as alternative (some hosts prefer)
+        setTimeout(() => {
+          if (!loaded) {
+            // create iframe viewer using Google Docs viewer as fallback (if CORS prevents inline display)
+            const iframe = document.createElement('iframe');
+            iframe.src = 'https://docs.google.com/gview?url=' + encodeURIComponent(src) + '&embedded=true';
+            iframe.width='100%'; iframe.height='100%'; iframe.frameBorder='0';
+            viewer.innerHTML = '';
+            viewer.appendChild(iframe);
+            rawLink.href = src;
+            fallback.style.display = 'block';
+          } else {
+            fallback.style.display = 'none';
+          }
+        }, 800);
+      } catch (e) {
+        // fallback: just show link
+        viewer.innerHTML = '<div>Impossible d\'intégrer le document. <a href="' + src + '" target="_blank">Ouvrir dans un nouvel onglet</a></div>';
+        rawLink.href = src;
+        fallback.style.display = 'block';
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin - Rep Cours</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Styles temporaires spécifiques à l'admin (tu peux les déplacer dans style.css final) */
+    .admin-container { max-width: 1100px; margin: 30px auto; padding: 20px; }
+    .admin-grid { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+    .card { background:#fff; padding:18px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); flex:1 1 420px; }
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:1000; }
+    .modal { background:#fff; padding:20px; border-radius:8px; width:360px; box-shadow:0 8px 24px rgba(0,0,0,0.2); }
+    .small { font-size:0.9rem; color:#555; }
+    .hidden { display:none; }
+    .upload-list { max-height: 420px; overflow:auto; padding-right:6px; }
+    label { display:block; margin-bottom:8px; font-weight:600; }
+    input[type="text"], input[type="number"], select, input[type="file"] { width:100%; padding:8px; border-radius:6px; border:1px solid #ccc; margin-top:6px; }
+    button { padding:10px 14px; border-radius:6px; border:none; background:#007bff; color:#fff; cursor:pointer; }
+    button.secondary { background:#6c757d; }
+    .topbar { background:#004085; color:#fff; padding:18px; text-align:center; margin-bottom:8px; }
+    /* boutons style admin list (visuel immédiat) */
+    .btn-inline { display:inline-block; padding:6px 10px; border-radius:6px; text-decoration:none; color:#fff; background:#007bff; font-weight:700; }
+    .btn-inline.secondary { background:#6c757d; margin-left:8px; }
+    .file-meta { font-size:0.92rem; color:#444; }
+    .file-row { padding:10px 0; border-bottom:1px solid #eee; display:flex; flex-direction:column; gap:6px; }
+    .file-actions { display:flex; gap:8px; align-items:center; margin-top:6px; }
+    .selected-file-info { font-size:0.9rem; color:#333; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>⚡ Admin - Rep Cours</h1>
+    <p style="margin:6px 0 0;">Dashboard d'administration — gérer uploads et consulter l'historique</p>
+  </header>
+
+  <main class="admin-container">
+    <div id="admin-dashboard" class="admin-grid">
+      <!-- Upload card -->
+      <div class="card" aria-labelledby="upload-title">
+        <h3 id="upload-title">Uploader un fichier</h3>
+        <form id="upload-form" aria-describedby="upload-help">
+          <label>Titre
+            <input type="text" id="title" name="title" placeholder="Titre du document" required>
+          </label>
+
+          <label>Classe
+            <select id="class" name="class">
+              <option value="">--</option>
+              <option value="6eme">6ème</option><option value="5eme">5ème</option><option value="4eme">4ème</option>
+              <option value="3eme">3ème</option><option value="2nde">2nde</option><option value="1ere">1ère</option><option value="terminale">Terminale</option>
+            </select>
+          </label>
+
+          <label>Matière
+            <select id="subject" name="subject">
+              <option value="">--</option><option value="math">Maths</option><option value="physique">Physique-Chimie</option><option value="svt">SVT</option>
+            </select>
+          </label>
+
+          <label>Trimestre
+            <input type="number" id="trimester" name="trimester" min="1" max="3">
+          </label>
+
+          <label>Type
+            <select id="type" name="type">
+              <option value="">--</option><option value="exercice">Exercice</option><option value="epreuve">Épreuve</option><option value="compilation">Compilation</option><option value="autre">Autre</option>
+            </select>
+          </label>
+
+          <label>Tags (séparés par des virgules)
+            <input type="text" id="tags" name="tags" placeholder="ex: chapitre1, correction">
+          </label>
+
+          <label>Fichier (pdf, docx, jpg, png, etc.)
+            <!-- allow many types; server accepte raw or image -->
+            <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.txt,.zip" required>
+          </label>
+          <div id="selected-file" class="selected-file-info" aria-live="polite"></div>
+          <div id="upload-help" class="small" style="margin-top:6px;">Taille max: 100MB. Formats acceptés : PDF, DOCX, JPG, PNG, PPTX, ZIP, TXT.</div>
+
+          <div style="display:flex; gap:10px; align-items:center; margin-top:12px;">
+            <button type="submit">Uploader</button>
+            <button type="button" id="logout-btn" class="secondary" style="margin-left:auto;">Se déconnecter</button>
+          </div>
+
+          <p id="upload-status" class="small" style="margin-top:10px;"></p>
+        </form>
+      </div>
+
+      <!-- History card -->
+      <div class="card" aria-labelledby="history-title">
+        <h3 id="history-title">Derniers uploads</h3>
+        <div id="uploads" class="upload-list" aria-live="polite" aria-relevant="additions removals">
+          <!-- Liste remplie par JS -->
+        </div>
+
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <button id="refresh-btn">Rafraîchir</button>
+          <a href="library.html" class="small" style="margin-left:auto; align-self:center;">Voir la bibliothèque</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal login (apparait si non authentifié) -->
+  <div id="login-modal" class="modal-backdrop hidden" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
+      <h2 id="login-title">Connexion Admin</h2>
+      <form id="login-form">
+        <label>Identifiant
+          <input type="text" id="login-username" autocomplete="username" required>
+        </label>
+        <label>Mot de passe
+          <input type="password" id="login-password" autocomplete="current-password" required>
+        </label>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button type="submit">Se connecter</button>
+          <button type="button" id="close-login" class="secondary">Annuler</button>
+        </div>
+        <p class="small" style="margin-top:8px;">Les identifiants par défaut sont configurés dans le fichier <code>.env</code>.</p>
+        <p id="login-error" class="small" style="color:#b91c1c"></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>

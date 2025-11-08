@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bibliothèque — Rep Cours</title>
+  <meta name="description" content="Bibliothèque de ressources : épreuves, exercices et compilés.">
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    /* safety + base */
+    html,body { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; overflow-x:hidden; background:#f7fbff; color:#112; font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; }
+    *,*::before,*::after{box-sizing:inherit}
+    a{color:inherit;text-decoration:none}
+
+    :root{
+      --brand-1:#043049;
+      --brand-2:#0d6efd;
+      --muted:#6b7c90;
+      --accent:#06b6d4;
+    }
+
+    .container { max-width:1180px; margin:0 auto; padding:0 16px; }
+
+    /* HEADER / NAV */
+    header.site-header{
+      background: linear-gradient(90deg,#08325b 0%, #0e486e 50%, #0c3a5a 100%);
+      color:#fff;
+      position:sticky;
+      top:0;
+      z-index:1200;
+      box-shadow:0 6px 24px rgba(3,15,30,0.12);
+    }
+    .header-inner{display:flex;align-items:center;gap:18px;justify-content:space-between;padding:12px 16px}
+    .brand{display:flex;gap:12px;align-items:center;color:inherit;text-decoration:none}
+    .logo-mark{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#2bb7ff,#0d6efd);font-weight:900;color:#fff;box-shadow:0 8px 22px rgba(3,15,30,0.18)}
+    .site-title{font-weight:900}
+    .site-tag{font-size:0.85rem;opacity:0.9}
+
+    nav.main-nav{flex:1 1 auto;display:flex;justify-content:center; position:relative; }
+
+    .nav-list{display:flex;gap:20px;list-style:none;margin:0;padding:0;align-items:center}
+    .nav-link{color:rgba(255,255,255,0.95);font-weight:800;padding:8px 14px;border-radius:10px;transition:all .15s}
+    .nav-link:hover{background:rgba(255,255,255,0.06)}
+    .nav-link.active{background:rgba(255,255,255,0.12)}
+    .nav-actions{display:flex;gap:12px;align-items:center}
+    .btn{padding:10px 16px;border-radius:12px;font-weight:800;display:inline-block}
+    .primary-cta{background:linear-gradient(90deg,#2bb7ff,#0d6efd);color:#fff;box-shadow:0 10px 28px rgba(13,110,253,0.12)}
+
+    /* hamburger */
+    .nav-toggle{display:none;background:transparent;border:0;color:#fff;font-size:18px;padding:6px;cursor:pointer;border-radius:8px;outline:none !important;}
+    .nav-toggle:focus{box-shadow:none !important;}
+
+    /* HERO */
+    .library-hero { padding: 40px 0; display:block; }
+    .library-inner { display:flex; gap:24px; align-items:center; max-width:1180px; margin:0 auto; padding:0 16px; }
+    .hero-panel {
+      background: linear-gradient(90deg, rgba(255,255,255,0.98), rgba(255,255,255,0.95));
+      padding:18px;
+      border-radius:14px;
+      box-shadow:0 14px 36px rgba(3,15,30,0.06);
+      flex:1 1 600px;
+      min-width:240px;
+    }
+    .hero-content h1 { font-size:1.9rem; color:var(--brand-1); margin:0 0 8px 0; }
+    .library-hero .lead { color:var(--muted); font-weight:600; margin-bottom:8px; }
+
+    /* HERO VISUAL (carousel confined) - CORRECTION TOTALE */
+    .hero-visual,
+    .hero-visual *,
+    .hero-visual *::before,
+    .hero-visual *::after { 
+      border:0 !important;
+      outline:0 !important;
+    }
+    
+    .hero-visual { 
+      width:420px; 
+      height:260px; 
+      border-radius:14px !important; 
+      overflow:hidden; 
+      box-shadow: 0 18px 40px rgba(2,8,23,0.18); 
+      background:#f3f7fb; 
+      flex:0 0 420px; 
+      position:relative; 
+      min-width:220px;
+    }
+    
+    .hero-visual .image { 
+      position:absolute; 
+      inset:0; 
+      background-size:cover; 
+      background-position:center; 
+      background-repeat:no-repeat; 
+      opacity:0; 
+      transform:scale(1.03); 
+      transition:opacity .48s ease, transform .48s ease;
+    }
+    .hero-visual .image.active { opacity:1; transform:scale(1); }
+
+    .carousel-controls{position:absolute;left:8px;right:8px;bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;z-index:30;padding:0 8px}
+    .carousel-indicators{display:flex;gap:8px;align-items:center;justify-content:center}
+    .carousel-indicators button{width:10px;height:10px;border-radius:999px;border:0;background:rgba(255,255,255,0.75);cursor:pointer}
+    .carousel-indicators button.active{background:var(--brand-2);transform:scale(1.05)}
+    .carousel-btn{background:rgba(6,32,64,0.65);color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:800;cursor:pointer}
+
+    /* FILTERS */
+    .filters-panel { margin-top:14px; }
+    .filters-grid { display:grid; grid-template-columns: repeat(6, 1fr); gap:12px; align-items:end; }
+    .filters-grid label { display:block; font-weight:700; font-size:0.95rem; color:var(--brand-1); }
+    .filters-grid select, .filters-grid input { width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(8,40,64,0.06); font-size:0.95rem; }
+
+    @media (max-width:1000px) { .library-inner { flex-direction:column-reverse; } .filters-grid { grid-template-columns: 1fr; } }
+
+    /* results */
+    .results-grid { margin-top:18px; }
+    .results-grid-inner { display:grid; grid-template-columns: repeat(4, 1fr); gap:18px; }
+    @media (max-width:1100px) { .results-grid-inner { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width:840px) { .results-grid-inner { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width:520px) { .results-grid-inner { grid-template-columns: 1fr; } }
+
+    .card { background: linear-gradient(180deg,#fff,#fbfdff); border-radius:12px; padding:14px; box-shadow: 0 12px 28px rgba(11,58,102,0.04); }
+    .resource-card { display:flex; flex-direction:column; gap:10px; min-height:160px; }
+    .resource-card h3 { font-size:1.03rem; margin:0; color:var(--brand-1); }
+    .resource-card .meta { font-size:0.9rem; color:var(--muted); margin:0; }
+    .file-actions{display:flex;gap:8px;margin-top:auto}
+    .btn-outline{background:transparent;border:1px solid rgba(4,20,40,0.06);padding:8px 10px;border-radius:8px;font-weight:800}
+    .download-btn{background:linear-gradient(180deg,#06b6d4,#0d6efd);color:#fff;padding:8px 10px;border-radius:8px;font-weight:800;border:0}
+
+    /* tag chips */
+    .tag, .tag-chip{background:transparent;border:1px solid rgba(8,40,64,0.06);padding:6px 8px;border-radius:8px;margin-right:6px;cursor:pointer}
+
+    /* LOAD MORE */
+    #loadmore-wrap{margin:18px 0 40px;text-align:center}
+
+    /* WHATSAPP FLOAT */
+    .whatsapp-fab{position:fixed;right:14px;bottom:14px;width:56px;height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#25D366,#1EA54A);box-shadow:0 18px 40px rgba(3,15,30,0.18);z-index:1500}
+
+    /* FOOTER */
+    .site-footer{background:linear-gradient(180deg,#03243f,#034060);color:#fff;padding:28px 0;margin-top:28px}
+    .footer-inner{display:flex;gap:20px;flex-wrap:wrap;justify-content:space-between;align-items:flex-start}
+    .footer-col a{display:block;color:rgba(255,255,255,0.9);margin-bottom:6px;text-decoration:none}
+
+    /* RESPONSIVE: mobile overlay menu + burger placement - REFONTE COMPLETE */
+    @media (max-width:980px) {
+      .nav-toggle{display:block}
+      .nav-actions > .primary-cta { display:none; }
+      
+      /* Container du nav reste relatif */
+      nav.main-nav {
+        position:static;
+      }
+      
+      /* Menu caché par défaut */
+      nav.main-nav .nav-list{
+        display:none;
+      }
+      
+      /* Menu ouvert - NOUVELLE VERSION : dropdown propre sous le header */
+      nav.main-nav.open .nav-list{
+        display:flex;
+        flex-direction:column;
+        position:fixed;
+        top:70px;
+        left:50%;
+        transform:translateX(-50%);
+        width:calc(100% - 32px);
+        max-width:500px;
+        padding:24px 20px;
+        gap:4px;
+        /* Même gradient que le header */
+        background: linear-gradient(135deg, #08325b 0%, #0e486e 50%, #0c3a5a 100%);
+        border-radius:16px;
+        box-shadow:0 24px 60px rgba(8,50,91,0.4);
+        z-index:9999;
+        animation:slideDown 0.3s ease;
+      }
+      
+      @keyframes slideDown {
+        from { opacity:0; transform:translateX(-50%) translateY(-10px); }
+        to { opacity:1; transform:translateX(-50%) translateY(0); }
+      }
+      
+      /* Chaque lien dans le menu mobile */
+      nav.main-nav.open .nav-list li {
+        list-style:none;
+        width:100%;
+      }
+      
+      nav.main-nav.open .nav-list .nav-link {
+        display:block;
+        width:100%;
+        text-align:center;
+        padding:14px 20px;
+        font-size:1.05rem;
+        font-weight:700;
+        color:rgba(255,255,255,0.95);
+        background:transparent;
+        border-radius:12px;
+        transition:all 0.2s ease;
+      }
+      
+      nav.main-nav.open .nav-list .nav-link:hover,
+      nav.main-nav.open .nav-list .nav-link.active {
+        background:rgba(255,255,255,0.15);
+        color:#fff;
+      }
+      
+      /* Overlay sombre derrière le menu */
+      nav.main-nav.open::before {
+        content:'';
+        position:fixed;
+        top:0;
+        left:0;
+        right:0;
+        bottom:0;
+        background:rgba(4,20,40,0.5);
+        z-index:9998;
+        animation:fadeIn 0.3s ease;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity:0; }
+        to { opacity:1; }
+      }
+      
+      .nav-actions{ }
+      .hero-visual{width:100%;height:220px;flex:0 0 auto;order:1}
+      .library-inner{flex-direction:column-reverse;gap:16px}
+      .filters-grid{grid-template-columns:1fr}
+    }
+
+    @media (max-width:520px) {
+      .hero-visual{height:180px}
+      .whatsapp-fab{right:12px;bottom:12px;width:52px;height:52px}
+    }
+
+    /* CORRECTION : Nettoyage total des artefacts */
+    button[aria-expanded],
+    button[aria-expanded] *,
+    button[aria-expanded]::before,
+    button[aria-expanded]::after { 
+      outline:0 !important; 
+      border:0 !important;
+      box-shadow:none !important;
+    }
+    
+    /* Suppression globale de tous les pseudo-éléments parasites */
+    .site-header *::before,
+    .site-header *::after {
+      border:0 !important;
+      outline:0 !important;
+    }
+
+    /* prevent long text overflow */
+    .resource-card h3, .resource-card .meta { word-break:break-word; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header" role="banner">
+    <div class="header-inner container">
+      <a class="brand" href="index.html" aria-label="Rep Cours - Accueil">
+        <div class="logo-mark" aria-hidden="true">RC</div>
+        <div>
+          <div class="site-title">Rep Cours</div>
+          <div class="site-tag">Révisions • Soutien • Préparation concours</div>
+        </div>
+      </a>
+
+      <nav id="main-nav" class="main-nav" role="navigation" aria-label="Navigation principale">
+        <ul class="nav-list" id="nav-list">
+          <li><a class="nav-link" href="index.html">Accueil</a></li>
+          <li><a class="nav-link active" href="library.html" aria-current="page">Bibliothèque</a></li>
+          <li><a class="nav-link" href="about.html">À propos</a></li>
+          <li><a class="nav-link" href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="btn primary-cta" href="contact.html">Réserver une séance</a>
+        <button id="nav-toggle" class="nav-toggle" aria-controls="main-nav" aria-expanded="false" aria-label="Ouvrir le menu">
+          <svg width="22" height="14" viewBox="0 0 24 14" fill="none" aria-hidden="true"><rect width="24" height="2" rx="1" fill="#fff"/><rect y="6" width="24" height="2" rx="1" fill="#fff"/><rect y="12" width="24" height="2" rx="1" fill="#fff"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="library-hero">
+    <div class="library-inner container">
+      <div class="hero-panel hero-content">
+        <h1>Bibliothèque — Épreuves, exercices et compilations</h1>
+        <p class="lead">Trouvez rapidement des épreuves par classe, matière, trimestre ou type — filtrer, prévisualiser ou télécharger les documents originaux (PDF, images, DOCX).</p>
+
+        <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+          <a class="btn primary-cta" href="contact.html">Demander un accompagnement</a>
+          <a class="btn btn-outline" href="index.html">Retour à l'accueil</a>
+        </div>
+
+        <p class="small" style="margin-top:10px; color:var(--muted);">Parcourez nos ressources : épreuves d'examen, exercices corrigés et compilations par niveau.</p>
+      </div>
+
+      <div class="hero-visual" id="library-hero-visual" aria-label="Galerie visuelle">
+        <div class="image active" style="background-image:url('assets/library-1.jpg')"></div>
+        <div class="image" style="background-image:url('assets/library-2.jpg')"></div>
+        <div class="image" style="background-image:url('assets/library-3.jpg')"></div>
+
+        <div class="carousel-controls">
+          <div><button class="carousel-btn" id="lib-carousel-prev" aria-label="Image précédente">◀</button></div>
+          <div class="carousel-indicators" id="lib-carousel-indicators" role="tablist" aria-label="Indicateurs images"></div>
+          <div><button class="carousel-btn" id="lib-carousel-next" aria-label="Image suivante">▶</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FILTERS / MAIN -->
+  <main class="container" style="margin-top:18px;">
+    <section class="filters-panel card" aria-label="Filtres de la bibliothèque">
+      <div class="filters-grid">
+        <label>
+          Classe
+          <select id="filter-class">
+            <option value="">Toutes</option>
+            <option value="6eme">6ème</option>
+            <option value="5eme">5ème</option>
+            <option value="4eme">4ème</option>
+            <option value="3eme">3ème</option>
+            <option value="2nde">2nde</option>
+            <option value="1ere">1ère</option>
+            <option value="terminale">Terminale</option>
+          </select>
+        </label>
+
+        <label>
+          Matière
+          <select id="filter-subject">
+            <option value="">Toutes</option>
+            <option value="math">Maths</option>
+            <option value="physique">Physique-Chimie</option>
+            <option value="svt">SVT</option>
+          </select>
+        </label>
+
+        <label>
+          Trimestre
+          <select id="filter-trimester">
+            <option value="">Tous</option>
+            <option value="1">1er</option>
+            <option value="2">2ème</option>
+            <option value="3">3ème</option>
+          </select>
+        </label>
+
+        <label>
+          Type
+          <select id="filter-type">
+            <option value="">Tous</option>
+            <option value="exercice">Exercice</option>
+            <option value="epreuve">Épreuve</option>
+            <option value="compilation">Compilation</option>
+            <option value="autre">Autre</option>
+          </select>
+        </label>
+
+        <label style="grid-column: span 2;">
+          Recherche (titre / tag)
+          <input id="filter-key" type="search" placeholder="Ex : équations, bac, ENAM">
+        </label>
+
+        <div class="filters-actions" style="align-self:end; display:flex; gap:8px;">
+          <button id="btn-filter" class="btn primary-cta">Appliquer</button>
+          <button id="btn-clear" class="btn btn-outline">Réinitialiser</button>
+        </div>
+      </div>
+
+      <div id="tag-cloud" style="margin-top:12px;"></div>
+    </section>
+
+    <section style="margin-top:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+      <div id="results-count" class="small">Chargement…</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <label class="small">Trier :</label>
+        <select id="sort-by" style="padding:8px 10px; border-radius:8px;">
+          <option value="date_desc">Plus récents</option>
+          <option value="date_asc">Plus anciens</option>
+          <option value="title_asc">Titre A→Z</option>
+          <option value="title_desc">Titre Z→A</option>
+        </select>
+      </div>
+    </section>
+
+    <section id="results" class="results-grid" aria-label="Liste des ressources" style="margin-top:12px;"></section>
+
+    <div id="loadmore-wrap">
+      <button id="load-more-btn" class="btn primary-cta">Charger plus</button>
+      <p id="loadmore-note" class="small"></p>
+    </div>
+  </main>
+
+  <!-- WHATSAPP FLOAT -->
+  <a href="https://wa.me/22890XXXXXXX" id="whatsapp-fab" class="whatsapp-fab" target="_blank" rel="noopener" aria-label="Contacter sur WhatsApp">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path d="M20.52 3.48A11.94 11.94 0 0012 0C5.373 0 .063 5.31.063 11.94c0 2.106.55 4.16 1.593 5.977L0 24l6.354-1.66A11.93 11.93 0 0012 23.88c6.627 0 11.941-5.313 11.941-11.94 0-3.19-1.246-6.19-3.42-8.46z" fill="#25D366"/>
+      <path d="M17.36 14.64c-.3-.15-1.77-.87-2.05-.97-.28-.1-.48-.15-.69.15-.21.3-.81.97-.99 1.17-.18.2-.36.22-.66.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.18-.3-.02-.46.13-.61.14-.14.3-.36.45-.54.15-.18.2-.3.3-.5.1-.2 0-.37-.05-.52-.05-.15-.69-1.67-.95-2.28-.25-.6-.5-.52-.69-.52-.18 0-.4-.02-.61-.02-.2 0-.52.07-.8.37-.28.3-1.05 1.02-1.05 2.48 0 1.46 1.08 2.87 1.23 3.07.15.2 2.11 3.22 5.11 4.52 3 1.3 3 0.86 3.51 0.81.5-.05 1.62-.66 1.85-1.3.23-.64.23-1.18.16-1.3-.07-.12-.28-.18-.58-.33" fill="#fff"/>
+    </svg>
+  </a>
+
+  <!-- FOOTER -->
+  <footer class="site-footer" role="contentinfo" style="margin-top:28px;">
+    <div class="container footer-inner">
+      <div class="footer-col">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="logo-mark">RC</div>
+          <div>
+            <strong style="color:#fff;">Rep Cours</strong>
+            <span class="small" style="color:rgba(255,255,255,0.85)">Révisions • Soutien • Préparation concours</span>
+          </div>
+        </div>
+        <p class="small" style="margin-top:12px;color:rgba(255,255,255,0.85)">Nous accompagnons les élèves du collège à l'université et préparons aux examens et concours nationaux.</p>
+      </div>
+
+      <div class="footer-col footer-links">
+        <strong style="color:#fff;">Liens utiles</strong>
+        <a href="library.html">Bibliothèque</a>
+        <a href="about.html">À propos</a>
+        <a href="contact.html">Contact</a>
+      </div>
+
+      <div class="footer-col">
+        <strong style="color:#fff;">Contact</strong>
+        <a href="mailto:profzzen@gmail.com" style="color:rgba(255,255,255,0.9);text-decoration:none;">profzzen@gmail.com</a>
+        <div style="margin-top:8px;">
+          <a class="btn btn-outline" href="contact.html">Réserver une séance</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;">
+          <div>© 2025 Rep Cours — Tous droits réservés</div>
+          <div style="color:rgba(255,255,255,0.85)">Conçu pour inspirer confiance et performance</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- client scripts -->
+  <script src="js/library.js" defer></script>
+
+  <!-- nav toggle -->
+  <script>
+    (function(){
+      const btn = document.getElementById('nav-toggle');
+      const nav = document.getElementById('main-nav');
+      const navList = document.getElementById('nav-list');
+      if(btn && nav){
+        btn.addEventListener('click', () => {
+          const open = nav.classList.toggle('open');
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (!open) btn.blur();
+        });
+        if(navList) navList.querySelectorAll('a').forEach(a => a.addEventListener('click', () => nav.classList.remove('open')));
+      }
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && nav && nav.classList.contains('open')) {
+          nav.classList.remove('open');
+          btn && btn.setAttribute('aria-expanded','false');
+          btn && btn.blur();
+        }
+      });
+    })();
+  </script>
+
+  <!-- hero carousel -->
+  <script>
+    (function(){
+      const visual = document.getElementById('library-hero-visual');
+      if (!visual) return;
+      const slides = Array.from(visual.querySelectorAll('.image'));
+      const indicatorsWrap = document.getElementById('lib-carousel-indicators');
+      const prevBtn = document.getElementById('lib-carousel-prev');
+      const nextBtn = document.getElementById('lib-carousel-next');
+      let idx = slides.findIndex(s => s.classList.contains('active'));
+      if (idx < 0) idx = 0;
+      let timer = null;
+      const AUTOPLAY = 4500;
+
+      function update() {
+        slides.forEach((s,i)=> s.classList.toggle('active', i===idx));
+        if (indicatorsWrap) {
+          indicatorsWrap.innerHTML = '';
+          slides.forEach((_,i)=> {
+            const b = document.createElement('button');
+            b.type='button';
+            b.className = i===idx ? 'active' : '';
+            b.addEventListener('click', ()=> { idx=i; update(); restart(); });
+            indicatorsWrap.appendChild(b);
+          });
+        }
+      }
+      function next(){ idx = (idx+1)%slides.length; update(); }
+      function prev(){ idx = (idx-1+slides.length)%slides.length; update(); }
+      function start(){ stop(); timer = setInterval(next, AUTOPLAY); }
+      function stop(){ if (timer) { clearInterval(timer); timer=null; } }
+      function restart(){ stop(); start(); }
+
+      prevBtn && prevBtn.addEventListener('click', ()=> { prev(); restart(); });
+      nextBtn && nextBtn.addEventListener('click', ()=> { next(); restart(); });
+
+      (function(){
+        let sx=0;
+        visual.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+        visual.addEventListener('touchend', e => {
+          const dx = e.changedTouches[0].clientX - sx;
+          if (Math.abs(dx) > 40) { dx < 0 ? next() : prev(); restart(); }
+        }, {passive:true});
+      })();
+
+      update();
+      start();
+      visual.addEventListener('mouseenter', stop);
+      visual.addEventListener('mouseleave', start);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rep Cours — Révisions, Soutien & Préparation concours</title>
+  <meta name="description" content="Rep Cours : révisions et préparation (Maths, Physique-Chimie, SVT) du collège à la fac — préparation Bac, probatoire, ENAM, EPL/ENSI, concours nationaux et encadrement universitaire.">
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Styles spécifiques à la page d'accueil -->
+  <style>
+    /* HERO SECTION */
+    .hero-banner { padding: 60px 0; position: relative; }
+    .hero-inner {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .hero-content {
+      flex: 1 1 600px;
+      color: #fff;
+      z-index: 2;
+      text-shadow: 0 4px 18px rgba(0,0,0,0.3);
+    }
+
+    .hero-content h1 {
+      font-size: 2.4rem;
+      font-weight: 900;
+      margin-bottom: 14px;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .hero-content .lead {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.95);
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .hero-benefits {
+      margin-top: 16px;
+      color: rgba(255,255,255,0.95);
+      font-weight: 600;
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .hero-benefits li {
+      padding-left: 28px;
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .hero-benefits li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #2bb7ff;
+      font-weight: 900;
+      font-size: 1.2rem;
+    }
+
+    /* CAROUSEL VISUEL - Confiné avec défilement */
+    .hero-visual {
+      flex: 0 0 480px;
+      width: 480px;
+      height: 320px;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 22px 60px rgba(8,40,80,0.22);
+      background: #f3f7fb;
+      position: relative;
+    }
+
+    /* Suppression des pseudo-éléments parasites */
+    .hero-visual,
+    .hero-visual *,
+    .hero-visual *::before,
+    .hero-visual *::after {
+      border: 0 !important;
+    }
+
+    .hero-visual::before,
+    .hero-visual::after {
+      display: none !important;
+      content: none !important;
+    }
+
+    .hero-visual .image {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0;
+      transform: scale(1.03);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .hero-visual .image.active {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Contrôles du carousel */
+    .carousel-controls {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 30;
+      padding: 0 8px;
+    }
+
+    .carousel-indicators {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .carousel-indicators button {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      border: 0;
+      background: rgba(255, 255, 255, 0.75);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .carousel-indicators button.active {
+      background: #0d6efd;
+      transform: scale(1.15);
+    }
+
+    .carousel-btn {
+      background: rgba(6, 32, 64, 0.7);
+      color: #fff;
+      border: 0;
+      padding: 8px 11px;
+      border-radius: 10px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
+    }
+
+    .carousel-btn:hover {
+      background: rgba(6, 32, 64, 0.9);
+    }
+
+    /* CTA Row */
+    .hero-cta-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1000px) {
+      .hero-inner {
+        flex-direction: column-reverse;
+        gap: 24px;
+      }
+      .hero-visual {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 280px !important;
+        flex: 0 0 auto !important;
+        order: -1;
+        display: block !important;
+      }
+      .hero-content {
+        text-align: center;
+      }
+      .hero-content h1 {
+        font-size: 2rem;
+      }
+      .hero-benefits {
+        text-align: left;
+        display: inline-block;
+      }
+      .hero-cta-row {
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .hero-visual {
+        height: 240px !important;
+        display: block !important;
+      }
+      .hero-content h1 {
+        font-size: 1.75rem;
+      }
+      .hero-cta-row {
+        flex-direction: column;
+      }
+      .hero-cta-row .btn {
+        width: 100%;
+        text-align: center;
+      }
+    }
+
+    /* STATISTIQUES */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .stat-card {
+      background: linear-gradient(180deg, #fff, #f8fbff);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 10px 28px rgba(11, 58, 102, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(11, 58, 102, 0.12);
+    }
+
+    .stat-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(180deg, #0d6efd, #06b6d4);
+      font-size: 1.3rem;
+      box-shadow: 0 8px 20px rgba(13, 110, 253, 0.25);
+    }
+
+    .stat-body .num {
+      font-size: 1.7rem;
+      font-weight: 900;
+      color: #043049;
+      margin-bottom: 4px;
+    }
+
+    .stat-body .label {
+      color: #6b7c90;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    /* Services Grid */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .services-grid .card.alt {
+      background: linear-gradient(135deg, #f8fbff 0%, #fff 100%);
+      border-left: 4px solid #0d6efd;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .services-grid .card.alt:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(11, 58, 102, 0.12);
+    }
+
+    .services-grid .card.alt h3 {
+      color: #043049;
+      font-size: 1.15rem;
+      margin-bottom: 10px;
+    }
+
+    .services-grid .card.alt p {
+      color: #6b7c90;
+      line-height: 1.6;
+    }
+
+    /* Section Titles */
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #043049;
+      margin-bottom: 8px;
+    }
+
+    /* FOOTER */
+    .site-footer .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .footer-col {
+      min-width: 180px;
+      max-width: 360px;
+    }
+
+    .footer-links a {
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      display: block;
+      margin-bottom: 8px;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      color: #fff;
+    }
+
+    .footer-bottom {
+      margin-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 16px;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 0.95rem;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header" role="banner">
+    <div class="header-inner container">
+      <a class="brand" href="index.html" aria-label="Rep Cours - Accueil">
+        <div class="logo-mark">RC</div>
+        <div>
+          <div class="site-title">Rep Cours</div>
+          <div class="site-tag">Révisions • Soutien • Préparation concours</div>
+        </div>
+      </a>
+
+      <nav id="main-nav" class="main-nav" role="navigation" aria-label="Navigation principale">
+        <ul class="nav-list">
+          <li><a class="nav-link active" href="index.html" aria-current="page">Accueil</a></li>
+          <li><a class="nav-link" href="library.html">Bibliothèque</a></li>
+          <li><a class="nav-link" href="about.html">À propos</a></li>
+          <li><a class="nav-link" href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="btn primary-cta" href="library.html">Voir les ressources</a>
+        <button id="nav-toggle" class="nav-toggle" aria-controls="main-nav" aria-expanded="false" aria-label="Ouvrir le menu">
+          <svg width="22" height="14" viewBox="0 0 24 14" fill="none" aria-hidden="true">
+            <rect width="24" height="2" rx="1" fill="#fff"/>
+            <rect y="6" width="24" height="2" rx="1" fill="#fff"/>
+            <rect y="12" width="24" height="2" rx="1" fill="#fff"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero-banner" aria-label="Bannière principale">
+    <div class="hero-inner container">
+      <div class="hero-content">
+        <h1>Progressez, préparez, réussissez — avec confiance</h1>
+        <p class="lead">Cours de révision, soutien personnalisé et programmes intensifs pour le collège, le lycée et l'université. Préparation ciblée aux examens (Brevet, Bac, Probatoire) et concours nationaux (ENAM, EPL/ENSI, etc.).</p>
+
+        <ul class="hero-benefits">
+          <li>Encadrement du collège à l'université (6ᵉ → 3ᵉ année)</li>
+          <li>Préparation concours & examens nationaux</li>
+          <li>Ressources téléchargeables, corrigés et stages intensifs</li>
+        </ul>
+
+        <div class="hero-cta-row">
+          <a class="btn primary-cta" href="contact.html">Réserver une séance</a>
+          <a class="btn btn-outline" href="library.html">Parcourir la bibliothèque</a>
+        </div>
+
+        <p class="small" style="margin-top:14px; opacity:0.9; color:rgba(255,255,255,0.95);">Séance d'essai à tarif réduit — <strong>offre découverte</strong>.</p>
+      </div>
+
+      <!-- CAROUSEL VISUEL avec 3 images qui défilent -->
+      <div class="hero-visual" id="hero-carousel" aria-label="Galerie visuelle">
+        <div class="image active" style="background-image:url('assets/hero-1.jpg')"></div>
+        <div class="image" style="background-image:url('assets/hero-2.jpg')"></div>
+        <div class="image" style="background-image:url('assets/hero-3.jpg')"></div>
+
+        <div class="carousel-controls">
+          <div><button class="carousel-btn" id="carousel-prev" aria-label="Image précédente">◀</button></div>
+          <div class="carousel-indicators" id="carousel-indicators" role="tablist" aria-label="Indicateurs images"></div>
+          <div><button class="carousel-btn" id="carousel-next" aria-label="Image suivante">▶</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN CONTENT -->
+  <main class="container" id="main" style="margin-top:32px;">
+
+    <section class="card">
+      <h2 class="section-title">Ce que propose Rep Cours</h2>
+      <p class="small" style="color:#6b7c90; margin-bottom:8px;">Des solutions adaptées à chaque niveau et objectif</p>
+      <div class="services-grid">
+        <div class="card alt">
+          <h3>📚 Révisions & Soutien</h3>
+          <p>Sessions individuelles et en petits groupes pour retravailler les notions et acquérir la méthode.</p>
+        </div>
+        <div class="card alt">
+          <h3>🎓 Préparation aux examens</h3>
+          <p>Stages intensifs et parcours sur mesure avant Brevet, Bac et Probatoire.</p>
+        </div>
+        <div class="card alt">
+          <h3>🏆 Préparation concours</h3>
+          <p>Programmes spécifiques pour ENAM, EPL/ENSI et autres concours nationaux.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="card" style="margin-top:24px;">
+      <h2 class="section-title">Nos résultats en chiffres</h2>
+      <p class="small" style="color:#6b7c90;">Des chiffres qui parlent — nos élèves progressent et réussissent.</p>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👩‍🎓</div>
+          <div class="stat-body">
+            <div class="num">1240</div>
+            <div class="label">Élèves accompagnés</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background:linear-gradient(180deg,#06b6d4,#0d6efd);">🏆</div>
+          <div class="stat-body">
+            <div class="num">89%</div>
+            <div class="label">Taux de réussite</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background:linear-gradient(180deg,#10b981,#059669);">⏱️</div>
+          <div class="stat-body">
+            <div class="num">7600+</div>
+            <div class="label">Heures de cours dispensées</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer" role="contentinfo" style="margin-top:40px;">
+    <div class="container footer-inner">
+      <div class="footer-col">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="logo-mark" style="width:46px;height:46px;">RC</div>
+          <div>
+            <strong style="color:#fff;">Rep Cours</strong>
+            <span class="small" style="color:rgba(255,255,255,0.85)">Révisions • Soutien • Préparation concours</span>
+          </div>
+        </div>
+        <p class="small" style="margin-top:12px;color:rgba(255,255,255,0.85)">Nous accompagnons les élèves du collège à l'université et préparons aux examens et concours nationaux.</p>
+      </div>
+
+      <div class="footer-col footer-links">
+        <strong style="color:#fff;">Liens utiles</strong>
+        <a href="library.html">Bibliothèque</a>
+        <a href="about.html">À propos</a>
+        <a href="contact.html">Contact</a>
+      </div>
+
+      <div class="footer-col">
+        <strong style="color:#fff;">Contact</strong>
+        <a href="mailto:profzzen@gmail.com" style="color:rgba(255,255,255,0.9);text-decoration:none;">profzzen@gmail.com</a>
+        <div style="margin-top:8px;">
+          <a class="btn btn-outline" href="contact.html">Réserver une séance</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;">
+          <div>© 2025 Rep Cours — Tous droits réservés</div>
+          <div style="color:rgba(255,255,255,0.85)">Conçu pour inspirer confiance et performance</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/index.js" defer></script>
+  
+  <!-- Navigation toggle -->
+  <script>
+    (function(){
+      const btn = document.getElementById('nav-toggle');
+      const nav = document.getElementById('main-nav');
+      if(btn && nav){
+        btn.addEventListener('click', () => {
+          const open = nav.classList.toggle('open');
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (!open) btn.blur();
+        });
+        nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+          nav.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+        }));
+      }
+      // Close on escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && nav && nav.classList.contains('open')) {
+          nav.classList.remove('open');
+          btn && btn.setAttribute('aria-expanded','false');
+        }
+      });
+    })();
+  </script>
+
+  <!-- Hero Carousel Script -->
+  <script>
+    (function(){
+      const carousel = document.getElementById('hero-carousel');
+      if (!carousel) return;
+      
+      const slides = Array.from(carousel.querySelectorAll('.image'));
+      const indicatorsWrap = document.getElementById('carousel-indicators');
+      const prevBtn = document.getElementById('carousel-prev');
+      const nextBtn = document.getElementById('carousel-next');
+      
+      let currentIndex = slides.findIndex(s => s.classList.contains('active'));
+      if (currentIndex < 0) currentIndex = 0;
+      
+      let autoplayTimer = null;
+      const AUTOPLAY_INTERVAL = 4500;
+
+      function updateSlides() {
+        slides.forEach((slide, i) => {
+          slide.classList.toggle('active', i === currentIndex);
+        });
+        
+        if (indicatorsWrap) {
+          indicatorsWrap.innerHTML = '';
+          slides.forEach((_, i) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = i === currentIndex ? 'active' : '';
+            btn.setAttribute('aria-label', `Image ${i + 1}`);
+            btn.addEventListener('click', () => {
+              currentIndex = i;
+              updateSlides();
+              restartAutoplay();
+            });
+            indicatorsWrap.appendChild(btn);
+          });
+        }
+      }
+
+      function nextSlide() {
+        currentIndex = (currentIndex + 1) % slides.length;
+        updateSlides();
+      }
+
+      function prevSlide() {
+        currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+        updateSlides();
+      }
+
+      function startAutoplay() {
+        stopAutoplay();
+        autoplayTimer = setInterval(nextSlide, AUTOPLAY_INTERVAL);
+      }
+
+      function stopAutoplay() {
+        if (autoplayTimer) {
+          clearInterval(autoplayTimer);
+          autoplayTimer = null;
+        }
+      }
+
+      function restartAutoplay() {
+        stopAutoplay();
+        startAutoplay();
+      }
+
+      // Event listeners
+      if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+          prevSlide();
+          restartAutoplay();
+        });
+      }
+
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          nextSlide();
+          restartAutoplay();
+        });
+      }
+
+      // Touch support
+      let touchStartX = 0;
+      carousel.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+      }, { passive: true });
+
+      carousel.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].clientX;
+        const diff = touchEndX - touchStartX;
+        if (Math.abs(diff) > 50) {
+          if (diff < 0) {
+            nextSlide();
+          } else {
+            prevSlide();
+          }
+          restartAutoplay();
+        }
+      }, { passive: true });
+
+      // Pause on hover
+      carousel.addEventListener('mouseenter', stopAutoplay);
+      carousel.addEventListener('mouseleave', startAutoplay);
+
+      // Initialize
+      updateSlides();
+      startAutoplay();
+    })();
+  </script>
+</body>
+</html>

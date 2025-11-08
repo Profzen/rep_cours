@@ -1,0 +1,241 @@
+/* public/css/style.css
+   CSS global final — palette pro, hero bannière, grid 4-col, responsive
+   - Colle ce fichier en remplacement du précédent style.css
+   - Evite scroll horizontal via overflow-x:hidden
+*/
+
+/* ----------------- RESET / BASE ----------------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #0f1724;
+  background: linear-gradient(180deg,#f7fafc 0%, #f0f6fb 100%);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  line-height: 1.45;
+  overflow-x: hidden; /* IMPORTANT: empêche scroll horizontal */
+}
+.container { max-width: 1180px; margin: 0 auto; padding: 20px; }
+
+/* ----------------- THEME VARIABLES ----------------- */
+:root{
+  --brand-1: #0b3a66;   /* deep navy */
+  --brand-2: #0d6efd;   /* vivid blue */
+  --accent: #06b6d4;    /* cyan */
+  --success: #10b981;   /* green */
+  --muted: #64748b;     /* gray blue */
+  --bg-card: #ffffff;
+  --glass: rgba(255,255,255,0.6);
+  --radius: 14px;
+  --shadow-1: 0 8px 30px rgba(12,36,64,0.08);
+  --shadow-2: 0 18px 40px rgba(12,36,64,0.12);
+}
+
+/* ----------------- TYPOGRAPHY ----------------- */
+h1, h2, h3, h4 { color: var(--brand-1); margin-bottom:10px; font-weight:800; }
+h1 { font-size: 2rem; line-height:1.05; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.2rem; }
+.lead { font-size:1.05rem; color: #334155; margin-bottom:12px; }
+
+/* ----------------- NAVBAR (desktop + mobile) ----------------- */
+.site-header {
+  position: sticky; top: 0; z-index: 60;
+  backdrop-filter: blur(6px);
+  background: linear-gradient(90deg, rgba(11,58,102,0.98), rgba(8,50,91,0.92));
+  box-shadow: 0 4px 18px rgba(11,58,102,0.12);
+}
+.header-inner { max-width:1180px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 20px; }
+.brand { display:flex; align-items:center; gap:12px; text-decoration:none; color:#fff; }
+.brand .logo-mark { width:44px; height:44px; border-radius:10px; background: linear-gradient(135deg,var(--brand-2), var(--accent)); box-shadow: 0 6px 20px rgba(13,110,253,0.12); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; }
+.site-title { font-size:1.05rem; font-weight:800; line-height:1; }
+.site-tag { font-size:0.82rem; color: rgba(255,255,255,0.92); margin-top:2px; }
+
+/* nav links */
+.main-nav ul { list-style:none; display:flex; gap:10px; align-items:center; margin:0; padding:0; }
+.nav-link { color:#fff; text-decoration:none; padding:8px 12px; border-radius:10px; font-weight:700; opacity:0.98; transition: all 180ms ease; }
+.nav-link:hover, .nav-link:focus { background: rgba(255,255,255,0.06); transform: translateY(-2px); }
+.nav-link[aria-current="page"] { background: rgba(255,255,255,0.12); box-shadow: inset 0 -2px 0 rgba(255,255,255,0.04); }
+
+.nav-actions { display:flex; gap:10px; align-items:center; }
+.btn { border: none; cursor:pointer; border-radius:10px; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
+.primary-cta, .btn-primary { background: linear-gradient(180deg,var(--brand-2), #0753d1); color:#fff; padding:10px 14px; box-shadow: 0 8px 26px rgba(7,83,209,0.12); }
+.btn-outline { background: rgba(255,255,255,0.95); color: var(--brand-1); padding:8px 12px; border-radius:10px; border:1px solid rgba(11,58,102,0.06); font-weight:700; }
+
+/* hamburger - mobile */
+.nav-toggle { display:none; width:46px; height:46px; border-radius:10px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.05); color:#fff; }
+.hamburger, .hamburger::before, .hamburger::after { display:block; height:2px; background:#fff; width:20px; border-radius:2px; margin:4px auto; }
+.hamburger::before { content:""; transform: translateY(-6px); display:block; }
+.hamburger::after { content:""; transform: translateY(4px); display:block; }
+
+/* Mobile nav behaviour */
+@media (max-width:920px) {
+  .main-nav { display:none; position:fixed; top:76px; left:12px; right:12px; z-index:90; border-radius:14px; padding:12px; background: linear-gradient(180deg,#08335a, #06406a); box-shadow: var(--shadow-2); }
+  .main-nav.open { display:block; }
+  .main-nav ul { flex-direction:column; gap:8px; }
+  .nav-toggle { display:block; }
+  .nav-actions .primary-cta { display:none; } /* hide CTA to save space */
+}
+
+/* ----------------- HERO BANNER (full width) ----------------- */
+/* Applied on pages that have .hero-banner (index/about etc.) — uses background-image */
+.hero-banner {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  color: #fff;
+  padding: 64px 0;
+  margin-bottom: 18px;
+  display:flex; align-items:center;
+}
+
+/* The inner container keeps text aligned with site grid */
+.hero-banner .hero-inner {
+  display:flex; gap:28px; align-items:center; width:100%; max-width:1180px; margin:0 auto; padding:0 20px;
+}
+
+/* left column: content */
+.hero-banner .hero-content {
+  flex:1 1 620px;
+  z-index:2;
+}
+.hero-banner h1 { font-size:2.4rem; margin-bottom:12px; color:#fff; }
+.hero-banner .lead { color: rgba(255,255,255,0.92); }
+
+/* right column: decorative (optional) */
+.hero-banner .hero-visual {
+  width:420px; height:320px; border-radius:14px; overflow:hidden; box-shadow: 0 18px 40px rgba(2,8,23,0.28);
+  flex: 0 0 420px;
+  position: relative;
+}
+
+/* Background image handled via inline style or CSS (cover). Example:
+   .hero-banner { background-image: url('../assets/hero-student.jpg'); background-size:cover; background-position:center; }
+   We'll also add a gradient overlay to place readable text on left side
+*/
+.hero-banner::before {
+  content: "";
+  position:absolute; inset:0;
+  background: linear-gradient(90deg, rgba(8,50,91,0.85) 0%, rgba(8,50,91,0.55) 30%, rgba(8,50,91,0.15) 55%, rgba(8,50,91,0.05) 75%, rgba(8,50,91,0.0) 100%);
+  z-index:1;
+  pointer-events:none;
+}
+
+/* small CTA row */
+.hero-cta-row { display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; }
+
+/* ----------------- SECTION / CARD ----------------- */
+.section-title { font-size:1.25rem; margin-bottom:10px; color:var(--brand-1); }
+.card { background: var(--bg-card); border-radius: var(--radius); padding:18px; box-shadow: var(--shadow-1); }
+.card.alt { background: linear-gradient(180deg,#fff,#fbfdff); }
+
+/* layouts */
+.services-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:18px; margin-top:18px; }
+@media (max-width:1000px) { .services-grid { grid-template-columns: 1fr; } }
+
+/* ----------------- LIBRARY GRID (4 columns desktop) ----------------- */
+.results-grid-inner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 columns by default */
+  gap: 18px;
+}
+@media (max-width:1100px) { .results-grid-inner { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width:840px) { .results-grid-inner { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width:520px) { .results-grid-inner { grid-template-columns: 1fr; } }
+
+/* Card look for resource */
+.resource-card {
+  border-radius: 12px;
+  padding: 16px;
+  background: linear-gradient(180deg,#ffffff, #fbfdff);
+  transition: transform 250ms ease, box-shadow 250ms ease;
+  border: 1px solid rgba(11,58,102,0.04);
+}
+.resource-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-2); }
+
+/* Title / meta */
+.resource-card h3 { font-size:1rem; color:var(--brand-1); margin-bottom:6px; }
+.resource-card .meta { font-size:0.9rem; color:var(--muted); margin-bottom:8px; }
+
+/* tags */
+.tags { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.tag, .tag-chip { background: linear-gradient(180deg, rgba(13,110,253,0.06), rgba(13,110,253,0.03)); border:1px solid rgba(13,110,253,0.08); color:var(--brand-1); padding:6px 10px; border-radius:999px; font-weight:700; font-size:0.82rem; cursor:pointer; }
+
+/* actions (open / download) */
+.file-actions { display:flex; gap:10px; align-items:center; margin-top:8px; }
+.btn-outline { background: transparent; color: var(--brand-1); border: 1px solid rgba(11,58,102,0.06); padding:8px 12px; border-radius:10px; text-decoration:none; display:inline-flex; align-items:center; }
+.download-btn { background: linear-gradient(180deg,var(--success), #059669); color:#fff; padding:9px 14px; border-radius:10px; text-decoration:none; font-weight:800; display:inline-block; }
+
+/* small text */
+.small { font-size:0.92rem; color:var(--muted); }
+
+/* ----------------- FILTERS PANEL ----------------- */
+.filters-panel { padding:14px; display:block; }
+.filters-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap:12px; align-items:end; }
+.filters-grid label { display:block; font-weight:700; color:var(--brand-1); font-size:0.95rem; }
+.filters-grid select, .filters-grid input { padding:10px 12px; border-radius:10px; border:1px solid rgba(11,58,102,0.06); background:#fff; width:100%; }
+@media (max-width:1000px) { .filters-grid { grid-template-columns: 1fr; } }
+
+/* filters actions */
+.filters-actions { display:flex; gap:10px; align-items:center; }
+
+/* ----------------- PAGINATION / LOAD MORE ----------------- */
+#load-more-btn { padding:12px 18px; border-radius:12px; font-weight:800; }
+.pagination-inner { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+
+/* ----------------- ABOUT / CONTACT BANNER STYLES ----------------- */
+/* About page banner uses .hero-banner with background-image set inline in HTML or via class */
+.hero-banner.centered {
+  padding: 80px 0; background-size: cover; background-position: center; position: relative;
+}
+.hero-banner .hero-inner { align-items:center; gap:28px; }
+
+/* ABOUT content layout (two columns) */
+.about-grid { display:grid; grid-template-columns: 1fr 380px; gap:22px; align-items:start; }
+@media (max-width:980px) { .about-grid { grid-template-columns: 1fr; } }
+
+/* Contact form layout */
+.contact-card .contact-grid { display:grid; grid-template-columns: 1fr 360px; gap:20px; }
+@media (max-width:980px) { .contact-card .contact-grid { grid-template-columns: 1fr; } }
+
+input[type="text"], input[type="email"], input[type="number"], textarea, select, input[type="file"] {
+  width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(11,58,102,0.06); background:#fff;
+}
+
+/* form buttons */
+button, .btn { outline:none; }
+
+/* ----------------- ADMIN helpers ----------------- */
+.admin-uploads-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px; }
+.file-card .file-meta { font-size:0.9rem; color:var(--muted); margin-top:6px; }
+
+/* modal */
+.modal-backdrop { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(2,6,23,0.55); z-index:1200; }
+.modal { width:360px; border-radius:12px; padding:18px; background:linear-gradient(180deg,#fff,#fbfdff); box-shadow: var(--shadow-2); }
+
+/* ----------------- WHATSAPP FLOATING BUTTON ----------------- */
+.whatsapp-fab { position: fixed; right: 18px; bottom: 18px; width:56px; height:56px; border-radius:999px; background: linear-gradient(180deg,#25D366,#1AA45A); display:flex; align-items:center; justify-content:center; box-shadow: 0 10px 30px rgba(6,95,70,0.18); z-index:9999; transform: translateZ(0); }
+.whatsapp-fab svg { width:22px; height:22px; }
+
+/* ----------------- FOOTER ----------------- */
+.site-footer { margin-top:32px; background: linear-gradient(180deg,#071a2a,#09263a); color:#fff; padding:22px 0; }
+.footer-inner { max-width:1180px; margin: 0 auto; display:flex; justify-content:space-between; gap:18px; align-items:center; }
+
+/* ----------------- UTILITIES ----------------- */
+.text-center { text-align:center; }
+.hidden { display:none !important; }
+.badge { display:inline-block; padding:6px 10px; border-radius:999px; background: rgba(255,255,255,0.06); color:#fff; font-weight:700; }
+
+/* ----------------- SMALL SCREEN TWEAKS ----------------- */
+@media (max-width:520px) {
+  .header-inner { padding:12px; }
+  .hero-banner { padding: 36px 0; }
+  .hero-banner h1 { font-size:1.4rem; }
+  .hero-banner .hero-visual { display:none; }
+  .filters-grid label { font-size:0.95rem; }
+}
+
+/* ----------------- ACCESSIBILITY / FOCUS ----------------- */
+a:focus, button:focus, input:focus { outline: 3px solid rgba(13,110,253,0.12); outline-offset: 2px; }
+
