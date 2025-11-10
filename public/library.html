@@ -13,18 +13,20 @@
     *,*::before,*::after{box-sizing:inherit}
     a{color:inherit;text-decoration:none}
 
+    /* --- NOUVELLE CHARTE (exacte) --- */
     :root{
-      --brand-1:#043049;
-      --brand-2:#0d6efd;
-      --muted:#6b7c90;
-      --accent:#06b6d4;
+      --brand-1: #3B1558;   /* indigo profond (titres) */
+      --brand-2: #FF6B61;   /* corail vibrant (cta, accents) */
+      --accent:  #14B8A6;   /* teal frais (secondaire) */
+      --success: #16A34A;
+      --muted:   #6B7280;
     }
 
     .container { max-width:1180px; margin:0 auto; padding:0 16px; }
 
-    /* HEADER / NAV */
+    /* HEADER / NAV — utilise la nouvelle palette */
     header.site-header{
-      background: linear-gradient(90deg,#08325b 0%, #0e486e 50%, #0c3a5a 100%);
+      background: linear-gradient(90deg, rgba(59,21,88,0.98), rgba(59,21,88,0.92));
       color:#fff;
       position:sticky;
       top:0;
@@ -33,7 +35,11 @@
     }
     .header-inner{display:flex;align-items:center;gap:18px;justify-content:space-between;padding:12px 16px}
     .brand{display:flex;gap:12px;align-items:center;color:inherit;text-decoration:none}
-    .logo-mark{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#2bb7ff,#0d6efd);font-weight:900;color:#fff;box-shadow:0 8px 22px rgba(3,15,30,0.18)}
+    .logo-mark{
+      width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+      background: linear-gradient(135deg,var(--brand-2), var(--accent));
+      font-weight:900;color:#fff;box-shadow:0 8px 22px rgba(3,15,30,0.18)
+    }
     .site-title{font-weight:900}
     .site-tag{font-size:0.85rem;opacity:0.9}
 
@@ -45,7 +51,10 @@
     .nav-link.active{background:rgba(255,255,255,0.12)}
     .nav-actions{display:flex;gap:12px;align-items:center}
     .btn{padding:10px 16px;border-radius:12px;font-weight:800;display:inline-block}
-    .primary-cta{background:linear-gradient(90deg,#2bb7ff,#0d6efd);color:#fff;box-shadow:0 10px 28px rgba(13,110,253,0.12)}
+    .primary-cta{
+      background: linear-gradient(180deg,var(--brand-2), #e65045);
+      color:#fff; box-shadow:0 10px 28px rgba(230,80,69,0.10);
+    }
 
     /* hamburger */
     .nav-toggle{display:none;background:transparent;border:0;color:#fff;font-size:18px;padding:6px;cursor:pointer;border-radius:8px;outline:none !important;}
@@ -69,31 +78,32 @@
     .hero-visual,
     .hero-visual *,
     .hero-visual *::before,
-    .hero-visual *::after { 
+    .hero-visual *::after {
       border:0 !important;
       outline:0 !important;
+      box-shadow:none !important;
     }
-    
-    .hero-visual { 
-      width:420px; 
-      height:260px; 
-      border-radius:14px !important; 
-      overflow:hidden; 
-      box-shadow: 0 18px 40px rgba(2,8,23,0.18); 
-      background:#f3f7fb; 
-      flex:0 0 420px; 
-      position:relative; 
+
+    .hero-visual {
+      width:420px;
+      height:260px;
+      border-radius:14px !important;
+      overflow:hidden;
+      box-shadow: 0 18px 40px rgba(19,16,34,0.10);
+      background:#f3f7fb;
+      flex:0 0 420px;
+      position:relative;
       min-width:220px;
     }
-    
-    .hero-visual .image { 
-      position:absolute; 
-      inset:0; 
-      background-size:cover; 
-      background-position:center; 
-      background-repeat:no-repeat; 
-      opacity:0; 
-      transform:scale(1.03); 
+
+    .hero-visual .image {
+      position:absolute;
+      inset:0;
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
+      opacity:0;
+      transform:scale(1.03);
       transition:opacity .48s ease, transform .48s ease;
     }
     .hero-visual .image.active { opacity:1; transform:scale(1); }
@@ -108,7 +118,7 @@
     .filters-panel { margin-top:14px; }
     .filters-grid { display:grid; grid-template-columns: repeat(6, 1fr); gap:12px; align-items:end; }
     .filters-grid label { display:block; font-weight:700; font-size:0.95rem; color:var(--brand-1); }
-    .filters-grid select, .filters-grid input { width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(8,40,64,0.06); font-size:0.95rem; }
+    .filters-grid select, .filters-grid input { width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(59,21,88,0.06); font-size:0.95rem; background:#fff; }
 
     @media (max-width:1000px) { .library-inner { flex-direction:column-reverse; } .filters-grid { grid-template-columns: 1fr; } }
 
@@ -119,16 +129,16 @@
     @media (max-width:840px) { .results-grid-inner { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width:520px) { .results-grid-inner { grid-template-columns: 1fr; } }
 
-    .card { background: linear-gradient(180deg,#fff,#fbfdff); border-radius:12px; padding:14px; box-shadow: 0 12px 28px rgba(11,58,102,0.04); }
+    .card { background: linear-gradient(180deg,#fff,#fbfdff); border-radius:12px; padding:14px; box-shadow: 0 12px 28px rgba(19,16,34,0.04); }
     .resource-card { display:flex; flex-direction:column; gap:10px; min-height:160px; }
     .resource-card h3 { font-size:1.03rem; margin:0; color:var(--brand-1); }
     .resource-card .meta { font-size:0.9rem; color:var(--muted); margin:0; }
     .file-actions{display:flex;gap:8px;margin-top:auto}
-    .btn-outline{background:transparent;border:1px solid rgba(4,20,40,0.06);padding:8px 10px;border-radius:8px;font-weight:800}
-    .download-btn{background:linear-gradient(180deg,#06b6d4,#0d6efd);color:#fff;padding:8px 10px;border-radius:8px;font-weight:800;border:0}
+    .btn-outline{background:transparent;border:1px solid rgba(59,21,88,0.06);padding:8px 10px;border-radius:8px;font-weight:800}
+    .download-btn{background: linear-gradient(180deg,var(--success), #059669); color:#fff; padding:8px 10px;border-radius:8px;font-weight:800;border:0}
 
     /* tag chips */
-    .tag, .tag-chip{background:transparent;border:1px solid rgba(8,40,64,0.06);padding:6px 8px;border-radius:8px;margin-right:6px;cursor:pointer}
+    .tag, .tag-chip{background: linear-gradient(180deg, rgba(255,107,97,0.06), rgba(20,184,166,0.03)); border:1px solid rgba(255,107,97,0.08); padding:6px 8px;border-radius:8px;margin-right:6px;cursor:pointer; color:var(--brand-1); }
 
     /* LOAD MORE */
     #loadmore-wrap{margin:18px 0 40px;text-align:center}
@@ -137,7 +147,7 @@
     .whatsapp-fab{position:fixed;right:14px;bottom:14px;width:56px;height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#25D366,#1EA54A);box-shadow:0 18px 40px rgba(3,15,30,0.18);z-index:1500}
 
     /* FOOTER */
-    .site-footer{background:linear-gradient(180deg,#03243f,#034060);color:#fff;padding:28px 0;margin-top:28px}
+    .site-footer{background:linear-gradient(180deg,#2b173d,#231431);color:#fff;padding:28px 0;margin-top:28px}
     .footer-inner{display:flex;gap:20px;flex-wrap:wrap;justify-content:space-between;align-items:flex-start}
     .footer-col a{display:block;color:rgba(255,255,255,0.9);margin-bottom:6px;text-decoration:none}
 
@@ -145,17 +155,17 @@
     @media (max-width:980px) {
       .nav-toggle{display:block}
       .nav-actions > .primary-cta { display:none; }
-      
+
       /* Container du nav reste relatif */
       nav.main-nav {
         position:static;
       }
-      
+
       /* Menu caché par défaut */
       nav.main-nav .nav-list{
         display:none;
       }
-      
+
       /* Menu ouvert - NOUVELLE VERSION : dropdown propre sous le header */
       nav.main-nav.open .nav-list{
         display:flex;
@@ -168,25 +178,23 @@
         max-width:500px;
         padding:24px 20px;
         gap:4px;
-        /* Même gradient que le header */
-        background: linear-gradient(135deg, #08325b 0%, #0e486e 50%, #0c3a5a 100%);
+        background: linear-gradient(135deg, rgba(59,21,88,1) 0%, rgba(47,17,72,1) 50%);
         border-radius:16px;
         box-shadow:0 24px 60px rgba(8,50,91,0.4);
         z-index:9999;
         animation:slideDown 0.3s ease;
       }
-      
+
       @keyframes slideDown {
         from { opacity:0; transform:translateX(-50%) translateY(-10px); }
         to { opacity:1; transform:translateX(-50%) translateY(0); }
       }
-      
-      /* Chaque lien dans le menu mobile */
+
       nav.main-nav.open .nav-list li {
         list-style:none;
         width:100%;
       }
-      
+
       nav.main-nav.open .nav-list .nav-link {
         display:block;
         width:100%;
@@ -199,13 +207,13 @@
         border-radius:12px;
         transition:all 0.2s ease;
       }
-      
+
       nav.main-nav.open .nav-list .nav-link:hover,
       nav.main-nav.open .nav-list .nav-link.active {
-        background:rgba(228, 156, 11, 0.15);
+        background:rgba(255,107,97,0.12);
         color:#fff;
       }
-      
+
       /* Overlay sombre derrière le menu */
       nav.main-nav.open::before {
         content:'';
@@ -218,12 +226,12 @@
         z-index:9998;
         animation:fadeIn 0.3s ease;
       }
-      
+
       @keyframes fadeIn {
         from { opacity:0; }
         to { opacity:1; }
       }
-      
+
       .nav-actions{ }
       .hero-visual{width:100%;height:220px;flex:0 0 auto;order:1}
       .library-inner{flex-direction:column-reverse;gap:16px}
@@ -239,12 +247,12 @@
     button[aria-expanded],
     button[aria-expanded] *,
     button[aria-expanded]::before,
-    button[aria-expanded]::after { 
-      outline:0 !important; 
+    button[aria-expanded]::after {
+      outline:0 !important;
       border:0 !important;
       box-shadow:none !important;
     }
-    
+
     /* Suppression globale de tous les pseudo-éléments parasites */
     .site-header *::before,
     .site-header *::after {
@@ -401,7 +409,7 @@
   </main>
 
   <!-- WHATSAPP FLOAT -->
-  <a href="https://wa.me/22890XXXXXXX" id="whatsapp-fab" class="whatsapp-fab" target="_blank" rel="noopener" aria-label="Contacter sur WhatsApp">
+  <a href="https://wa.me/22897974064" id="whatsapp-fab" class="whatsapp-fab" target="_blank" rel="noopener" aria-label="Contacter sur WhatsApp">
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
       <path d="M20.52 3.48A11.94 11.94 0 0012 0C5.373 0 .063 5.31.063 11.94c0 2.106.55 4.16 1.593 5.977L0 24l6.354-1.66A11.93 11.93 0 0012 23.88c6.627 0 11.941-5.313 11.941-11.94 0-3.19-1.246-6.19-3.42-8.46z" fill="#25D366"/>
       <path d="M17.36 14.64c-.3-.15-1.77-.87-2.05-.97-.28-.1-.48-.15-.69.15-.21.3-.81.97-.99 1.17-.18.2-.36.22-.66.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.18-.3-.02-.46.13-.61.14-.14.3-.36.45-.54.15-.18.2-.3.3-.5.1-.2 0-.37-.05-.52-.05-.15-.69-1.67-.95-2.28-.25-.6-.5-.52-.69-.52-.18 0-.4-.02-.61-.02-.2 0-.52.07-.8.37-.28.3-1.05 1.02-1.05 2.48 0 1.46 1.08 2.87 1.23 3.07.15.2 2.11 3.22 5.11 4.52 3 1.3 3 0.86 3.51 0.81.5-.05 1.62-.66 1.85-1.3.23-.64.23-1.18.16-1.3-.07-.12-.28-.18-.58-.33" fill="#fff"/>

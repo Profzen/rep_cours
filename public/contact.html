@@ -7,13 +7,25 @@
   <meta name="description" content="Contactez Rep Cours pour vos cours de soutien, préparation aux concours et examens.">
   <link rel="stylesheet" href="css/style.css">
   <style>
+    /* Palette (nouvelle charte) */
+    :root{
+      --brand-1: #3B1558;   /* indigo profond (titres) */
+      --brand-2: #FF6B61;   /* corail vibrant (cta, accents) */
+      --accent:  #14B8A6;   /* teal frais (secondaire) */
+      --success: #16A34A;
+      --muted:   #6B7280;
+      --bg-start: #fbfcfd;
+      --bg-end: #f6f8fb;
+      --shadow-1: 0 8px 30px rgba(19,16,34,0.06);
+    }
+
     /* RESET & BASE */
     *, *::before, *::after { box-sizing: border-box; }
     html, body {
       margin: 0; padding: 0;
       font-family: 'Poppins', sans-serif;
-      background: #f9fbfd;
-      color: #222;
+      background: linear-gradient(180deg,var(--bg-start) 0%, var(--bg-end) 100%);
+      color: #0f1724;
       overflow-x: hidden;
     }
     a { text-decoration: none; color: inherit; }
@@ -23,7 +35,7 @@
 
     /* ===================== NAVBAR ===================== */
     header.site-header {
-      background: linear-gradient(90deg, #08325b, #0e486e);
+      background: linear-gradient(90deg, rgba(59,21,88,0.98), rgba(59,21,88,0.92));
       color: #fff;
       position: sticky;
       top: 0;
@@ -38,9 +50,10 @@
       display: flex; align-items: center; gap: 10px; color: #fff;
     }
     .logo-mark {
-      width: 42px; height: 42px; background: linear-gradient(180deg,#06b6d4,#0d6efd);
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg,var(--brand-2), var(--accent));
       border-radius: 10px; display:flex; align-items:center; justify-content:center;
-      font-weight: 900;
+      font-weight: 900; color: #fff;
     }
     nav.main-nav ul {
       display: flex; list-style: none; gap: 22px; padding: 0; margin: 0;
@@ -52,7 +65,7 @@
     .nav-link:hover { background: rgba(255,255,255,0.15); }
     .nav-link.active { background: rgba(255,255,255,0.25); }
     .nav-actions a.btn {
-      background: linear-gradient(90deg,#2bb7ff,#0d6efd);
+      background: linear-gradient(180deg,var(--brand-2), #e65045);
       color: #fff; padding: 10px 16px; border-radius: 10px; font-weight: 700;
     }
 
@@ -66,12 +79,11 @@
     /* ===================== HERO ===================== */
     .contact-hero {
       position: relative; color: #fff; padding: 60px 0;
-      background: linear-gradient(90deg, rgba(8,30,60,0.9), rgba(8,30,60,0.6));
+      background: linear-gradient(90deg, rgba(59,21,88,0.9), rgba(59,21,88,0.6));
       overflow: hidden;
     }
     .contact-hero .bg-img {
       position: absolute; inset: 0;
-     
       opacity: 0.25;
     }
     .hero-inner {
@@ -80,12 +92,12 @@
       align-items: center; justify-content: space-between;
     }
     .hero-content { flex: 1 1 480px; }
-    .hero-content h1 { font-size: 2.2rem; margin-bottom: 10px; }
-    .hero-content p.lead { font-size: 1.05rem; margin-bottom: 14px; line-height: 1.5; }
+    .hero-content h1 { font-size: 2.2rem; margin-bottom: 10px; color: var(--bg-start); }
+    .hero-content p.lead { font-size: 1.05rem; margin-bottom: 14px; line-height: 1.5; color: rgba(255,255,255,0.92); }
     .hero-availability span {
       display: inline-block; background: rgba(255,255,255,0.15);
       padding: 6px 10px; border-radius: 8px; margin: 4px;
-      font-weight: 600;
+      font-weight: 600; color: #fff;
     }
 
     /* ===================== CONTACT FORM ===================== */
@@ -94,33 +106,33 @@
       display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start;
     }
     .card {
-      background: #fff; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      background: #fff; border-radius: 12px; box-shadow: var(--shadow-1);
       padding: 20px;
     }
     .contact-form { flex: 1 1 550px; min-width: 260px; }
     .contact-infos { flex: 0 0 320px; min-width: 240px; }
 
-    label { display: block; font-weight: 700; color: #08325b; margin-bottom: 5px; }
+    label { display: block; font-weight: 700; color: var(--brand-1); margin-bottom: 5px; }
     input, textarea {
       width: 100%; padding: 10px; border-radius: 8px;
-      border: 1px solid #d5dbe3; margin-bottom: 10px;
+      border: 1px solid #e6edf5; margin-bottom: 10px;
       font-family: inherit;
     }
-    input:focus, textarea:focus { border-color: #0d6efd; outline: none; }
+    input:focus, textarea:focus { border-color: var(--brand-2); outline: none; box-shadow: 0 6px 18px rgba(19,16,34,0.04); }
 
     .btn-send {
-      background: linear-gradient(90deg,#06b6d4,#0d6efd);
+      background: linear-gradient(180deg,var(--accent), var(--brand-2));
       color: #fff; border: none; padding: 12px 16px;
       border-radius: 10px; font-weight: 700; cursor: pointer;
     }
-    .btn-send:hover { opacity: 0.9; }
+    .btn-send:hover { opacity: 0.95; }
 
     .info-item {
       display: flex; gap: 12px; align-items: center; margin-bottom: 18px;
     }
     .info-icon {
       width: 42px; height: 42px;
-      background: linear-gradient(180deg,#06b6d4,#0d6efd);
+      background: linear-gradient(180deg,var(--accent),var(--brand-2));
       display: flex; align-items: center; justify-content: center;
       border-radius: 8px; color: #fff;
     }
@@ -140,7 +152,7 @@
 
     /* ===================== FOOTER ===================== */
     footer {
-      background: linear-gradient(180deg,#03243f,#034060);
+      background: linear-gradient(180deg,#2b173d,#231431);
       color: #fff; padding: 40px 0 20px; text-align: left;
     }
     .footer-inner { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; }
@@ -152,7 +164,7 @@
       .hero-inner { flex-direction: column; text-align: center; }
       .hero-content { order: 1; }
       .contact-grid { flex-direction: column-reverse; }
-      nav.main-nav ul { display: none; flex-direction: column; background: #0c3a5a; position: absolute; top: 64px; left: 0; right: 0; padding: 12px; }
+      nav.main-nav ul { display: none; flex-direction: column; background: linear-gradient(180deg, rgba(59,21,88,1), rgba(47,17,72,1)); position: absolute; top: 64px; left: 0; right: 0; padding: 12px; }
       nav.main-nav.open ul { display: flex; }
       .nav-toggle { display: block; }
       .nav-actions { display: none; }
@@ -174,7 +186,7 @@
         <div class="logo-mark">RC</div>
         <div>
           <div style="font-weight:900;">Rep Cours</div>
-          <div style="font-size:0.8rem;opacity:0.85;">Soutien & Préparation</div>
+          <div style="font-size:0.8rem;opacity:0.85;color:rgba(255,255,255,0.92)">Soutien & Préparation</div>
         </div>
       </a>
 
@@ -211,7 +223,7 @@
           <span>Soutien à Lomé et en ligne</span>
         </div>
       </div>
-      <div class="card" style="max-width:320px;color:#fff;background:rgba(255,255,255,0.1);">
+      <div class="card" style="max-width:320px;color:#fff;background:rgba(255,255,255,0.06);">
         <strong>Contact rapide</strong><br><br>
         📞 +228 90 XX XX XX<br>
         ✉️ <a href="mailto:profzzen@gmail.com" style="color:#fff;">profzzen@gmail.com</a><br>
@@ -243,7 +255,7 @@
         <div class="info-item"><div class="info-icon">📞</div><div><strong>Téléphone</strong><br>+228 90 XX XX XX</div></div>
         <div class="info-item"><div class="info-icon">✉️</div><div><strong>Email</strong><br><a href="mailto:profzzen@gmail.com">profzzen@gmail.com</a></div></div>
         <div class="info-item"><div class="info-icon">📍</div><div><strong>Adresse</strong><br>Lomé — Togo</div></div>
-        <div class="info-item"><div class="info-icon">💬</div><div><strong>WhatsApp</strong><br><a href="https://wa.me/22890XXXXXXX" target="_blank">Discuter maintenant</a></div></div>
+        <div class="info-item"><div class="info-icon">💬</div><div><strong>WhatsApp</strong><br><a href="https://wa.me/22897974094" target="_blank">Discuter maintenant</a></div></div>
       </div>
     </div>
   </main>
@@ -259,7 +271,7 @@
   <footer>
     <div class="container footer-inner">
       <div>
-        <div class="logo-mark">RC</div>
+        <div class="logo-mark" style="width:48px;height:48px;">RC</div>
         <p>Rep Cours — Soutien & Préparation</p>
       </div>
       <div>
