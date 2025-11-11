@@ -11,10 +11,11 @@ const nodemailer = require('nodemailer');
 const https = require('https');
 const http = require('http');
 const url = require('url');
+const path = require('path');
 
 const app = express();
 app.use(express.json({ limit: '800kb' }));
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ---------------- config ----------------
 const MONGO_URL = process.env.MONGO_URL;
@@ -39,35 +40,41 @@ cloudinary.config({
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || '',
   port: Number(process.env.SMTP_PORT || 465),
-  secure: (String(process.env.SMTP_SECURE || '') === 'true') || Number(process.env.SMTP_PORT || 465) === 465,
+  secure: String(process.env.SMTP_SECURE || (process.env.SMTP_PORT === '465')) === 'true' || Number(process.env.SMTP_PORT || 465) === 465,
   auth: {
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || ''
   }
 });
 
-// ---------------- MongoDB connexion (cached for serverless) ----------------
-let cachedClient = null;
-let cachedDb = null;
+// ---------------- MongoDB connexion ----------------
+let db = null;
+let metaColl = null;
+let contactsColl = null;
 
-async function getDb() {
-  if (cachedDb) return cachedDb;
+async function connectMongo() {
   if (!MONGO_URL) {
-    console.warn('⚠️ MONGO_URL not set. Database routes will fail until MONGO_URL is configured.');
-    throw new Error('MONGO_URL missing');
+    console.warn('⚠️ MONGO_URL non fourni — les routes db dépendantes retourneront des erreurs. Configure la variable d\'env MONGO_URL.');
+    return;
   }
-  if (!cachedClient) {
+  try {
     const client = new MongoClient(MONGO_URL, { useUnifiedTopology: true });
     await client.connect();
-    cachedClient = client;
+    db = client.db(DB_NAME);
+    metaColl = db.collection('files_meta');
+    contactsColl = db.collection('contacts');
+    await metaColl.createIndex({ title: "text", tags: "text", subject: 1, class: 1 });
+    console.log('✅ MongoDB connecté -> DB:', DB_NAME);
+  } catch (err) {
+    console.error('❌ Erreur connexion MongoDB:', err && err.message ? err.message : err);
+    // do not exit — let serverless wrapper or calling process decide
   }
-  cachedDb = cachedClient.db(DB_NAME);
-  try {
-    await cachedDb.collection('files_meta').createIndex({ title: "text", tags: "text", subject: 1, class: 1 });
-  } catch (e) { /* ignore index errors */ }
-  console.log('✅ MongoDB connecté -> DB:', DB_NAME);
-  return cachedDb;
 }
+
+// call connectMongo immediately (it is async)
+connectMongo().catch(err => {
+  console.error('Erreur lors du démarrage connexion Mongo:', err && err.message ? err.message : err);
+});
 
 // ---------------- Auth middleware ----------------
 function adminAuth(req, res, next) {
@@ -89,15 +96,8 @@ function adminAuth(req, res, next) {
 function safeIdString(id) {
   try { return (id instanceof ObjectId) ? id.toString() : String(id); } catch { return String(id); }
 }
-function escapeHtml(str = '') {
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
-}
 
-// ---------------- Routes ----------------
+/* ---------- ROUTES (unchanged logic) ---------- */
 
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body || {};
@@ -117,8 +117,6 @@ app.get('/api/admin/verify', adminAuth, (req, res) => {
 app.post('/api/upload', adminAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Fichier manquant' });
-    const db = await getDb();
-    const metaColl = db.collection('files_meta');
 
     const mimetype = req.file.mimetype || 'application/octet-stream';
     const resourceType = mimetype.startsWith('image/') ? 'image' : 'raw';
@@ -155,7 +153,7 @@ app.post('/api/upload', adminAuth, upload.single('file'), async (req, res) => {
       }
     };
 
-    const insertRes = await metaColl.insertOne(meta);
+    const insertRes = await (metaColl ? metaColl.insertOne(meta) : Promise.reject(new Error('DB not connected')));
     meta._id = insertRes.insertedId.toString();
 
     const returnMeta = {
@@ -184,8 +182,7 @@ app.post('/api/upload', adminAuth, upload.single('file'), async (req, res) => {
 
 app.get('/api/files', async (req, res) => {
   try {
-    const db = await getDb();
-    const metaColl = db.collection('files_meta');
+    if (!metaColl) return res.status(503).json({ error: 'DB non disponible' });
 
     const page = Math.max(1, Number(req.query.page) || 1);
     const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize) || 12));
@@ -232,15 +229,14 @@ app.get('/api/files', async (req, res) => {
 
     return res.json({ items, total, page, pageSize, totalPages });
   } catch (err) {
-    console.error('List files error:', err);
+    console.error('List files error:', err && err.message ? err.message : err);
     return res.status(500).json({ error: 'Erreur lecture fichiers' });
   }
 });
 
 app.get('/api/files/:id', async (req, res) => {
   try {
-    const db = await getDb();
-    const metaColl = db.collection('files_meta');
+    if (!metaColl) return res.status(503).json({ error: 'DB non disponible' });
 
     const metaId = req.params.id;
     if (!ObjectId.isValid(metaId)) return res.status(400).json({ error: 'Invalid id' });
@@ -249,15 +245,14 @@ app.get('/api/files/:id', async (req, res) => {
     it._id = it._id.toString();
     return res.json({ item: it });
   } catch (err) {
-    console.error('Get meta error:', err);
+    console.error('Get meta error:', err && err.message ? err.message : err);
     return res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 app.get('/api/files/:id/download', async (req, res) => {
   try {
-    const db = await getDb();
-    const metaColl = db.collection('files_meta');
+    if (!metaColl) return res.status(503).json({ error: 'DB non disponible' });
 
     const metaId = req.params.id;
     if (!ObjectId.isValid(metaId)) return res.status(400).json({ error: 'Invalid id' });
@@ -283,23 +278,21 @@ app.get('/api/files/:id/download', async (req, res) => {
       }
       cloudRes.pipe(res);
     }).on('error', err => {
-      console.error('Proxy download error:', err);
+      console.error('Proxy download error:', err && err.message ? err.message : err);
       res.sendStatus(500);
     });
 
   } catch (err) {
-    console.error('Download route error:', err);
+    console.error('Download route error:', err && err.message ? err.message : err);
     return res.status(500).json({ error: 'Impossible de télécharger le fichier' });
   }
 });
 
 app.post('/api/contact', async (req, res) => {
   try {
-    const db = await getDb();
-    const contactsColl = db.collection('contacts');
-
     const { name, email, subject, message } = req.body || {};
     if (!name || !email || !message) return res.status(400).json({ error: 'Missing fields' });
+    if (!contactsColl) return res.status(503).json({ error: 'DB non disponible' });
 
     const doc = { name, email, subject: subject || '', message, receivedAt: new Date() };
     const insertRes = await contactsColl.insertOne(doc);
@@ -314,35 +307,35 @@ app.post('/api/contact', async (req, res) => {
 
     try {
       const info = await transporter.sendMail(mailOptions);
-      console.log('Contact email sent:', info && info.messageId ? info.messageId : '(no-id)');
+      console.log('Contact email sent:', info.messageId);
     } catch (mailErr) {
       console.error('Erreur envoi mail contact:', mailErr && mailErr.message ? mailErr.message : mailErr);
     }
 
     return res.json({ ok: true, id: insertRes.insertedId.toString() });
   } catch (err) {
-    console.error('Contact send error:', err);
+    console.error('Contact send error:', err && err.message ? err.message : err);
     return res.status(500).json({ error: 'Impossible d\'envoyer le message' });
   }
 });
 
-// If the file is run directly (dev), start the server.
-// When used in serverless (imported from api/index.js), this block won't run.
+// Serve a basic health-check at root (helpful for vercel dev / debugging)
+app.get('/', (req, res) => res.send('Rep Cours API running'));
+
+// ----------------- Start server only if executed directly -----------------
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
-  (async () => {
-    try {
-      // ensure DB connect attempt (will warn if MONGO_URL missing)
-      await getDb();
-    } catch (err) {
-      console.error('⚠️ getDb() failed at startup (dev). Some routes will error until DB configured:', err && err.message ? err.message : err);
-      // continue anyway so static pages and non-db routes still respond
-    }
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-    });
-  })();
+  app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
 }
 
-// Export the app for serverless wrapper or tests
+// Export the app so serverless wrapper (api/index.js) can require it
 module.exports = app;
+
+/* small helper */
+function escapeHtml(str = '') {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}

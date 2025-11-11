@@ -5,7 +5,7 @@
   const INITIAL_WANTED = 30;
   const SERVER_PAGE_SIZE = 20;
 
-  // DOM helpers
+  // DOM helpers (defensive: check presence)
   const $ = id => document.getElementById(id);
   const filterClass = $('filter-class');
   const filterSubject = $('filter-subject');
@@ -20,6 +20,11 @@
   const loadMoreBtn = $('load-more-btn');
   const loadMoreNote = $('loadmore-note');
   const sortBy = $('sort-by');
+
+  if (!resultsSection) {
+    console.warn('library.js: #results element not found — script will stop.');
+    return;
+  }
 
   // State
   let serverPagePointer = 0;
@@ -41,23 +46,34 @@
     if (activeFilters.trimester) params.append('trimester', activeFilters.trimester);
     if (activeFilters.type) params.append('type', activeFilters.type);
     if (activeFilters.q) params.append('q', activeFilters.q);
+    // IMPORTANT: leading slash to ensure absolute path from site root
     return '/api/files?' + params.toString();
   }
 
   async function fetchServerPage(page) {
     const url = buildUrl(page);
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Erreur ' + res.status);
-    const data = await res.json();
-    if (Array.isArray(data)) {
-      serverTotalPages = 1;
-      return data;
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) {
+        // try to read body for better debug info
+        let body = '';
+        try { body = await res.text(); } catch (e) { body = ''; }
+        throw new Error(`Erreur ${res.status} ${res.statusText} — ${body || url}`);
+      }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        serverTotalPages = 1;
+        return data;
+      }
+      if (data && Array.isArray(data.items)) {
+        serverTotalPages = typeof data.totalPages === 'number' ? data.totalPages : serverTotalPages;
+        return data.items;
+      }
+      return [];
+    } catch (err) {
+      // Network errors and parsing errors end up here
+      throw new Error(`Fetch failed for ${url} — ${err && err.message ? err.message : err}`);
     }
-    if (data && Array.isArray(data.items)) {
-      serverTotalPages = typeof data.totalPages === 'number' ? data.totalPages : serverTotalPages;
-      return data.items;
-    }
-    return [];
   }
 
   function appendItems(items) {
@@ -74,7 +90,6 @@
     if (!f) return false;
     if (f.type && String(f.type).toLowerCase().includes('pdf')) return true;
     if (f.url && /\.pdf(\?|$)/i.test(f.url)) return true;
-    // fallback: filename in originalFilename
     if (f.originalFilename && /\.pdf(\?|$)/i.test(f.originalFilename)) return true;
     return false;
   }
@@ -83,12 +98,12 @@
     resultsSection.innerHTML = '';
     if (!allItems || allItems.length === 0) {
       resultsSection.innerHTML = '<p class="small">Aucun résultat pour ces filtres.</p>';
-      resultsCount.textContent = '0 ressource';
+      if (resultsCount) resultsCount.textContent = '0 ressource';
       return;
     }
 
     const sorted = [...allItems];
-    const s = sortBy.value;
+    const s = sortBy && sortBy.value;
     if (s === 'date_desc') sorted.sort((a,b) => new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0));
     else if (s === 'date_asc') sorted.sort((a,b) => new Date(a.uploadedAt || 0) - new Date(b.uploadedAt || 0));
     else if (s === 'title_asc') sorted.sort((a,b) => String((a.title||'')).localeCompare(String((b.title||''))));
@@ -120,7 +135,7 @@
           btn.className = 'tag';
           btn.textContent = t;
           btn.addEventListener('click', () => {
-            filterKey.value = t;
+            if (filterKey) filterKey.value = t;
             applyFilters();
             window.scrollTo({ top: resultsSection.offsetTop - 120, behavior: 'smooth' });
           });
@@ -142,11 +157,9 @@
         // Prefer public url (Cloud, S3, etc.)
         if (f.url) {
           if (isPdfResource(f)) {
-            // open pdf in our pdf viewer page
             const viewerUrl = 'pdf-viewer.html?src=' + encodeURIComponent(f.url);
             window.open(viewerUrl, '_blank', 'noopener');
           } else {
-            // images/other - open directly
             window.open(f.url, '_blank', 'noopener');
           }
           return;
@@ -159,13 +172,11 @@
             const viewerUrl = 'pdf-viewer.html?src=' + encodeURIComponent(downloadEndpoint);
             window.open(viewerUrl, '_blank', 'noopener');
           } else {
-            // open file url (may trigger download if server sets attachment)
             window.open(downloadEndpoint, '_blank', 'noopener');
           }
           return;
         }
 
-        // if nothing available
         alert('Aucun fichier disponible à l\'ouverture.');
       });
       actions.appendChild(openBtn);
@@ -175,12 +186,9 @@
       dlA.className = 'download-btn';
       if (f._id) {
         dlA.href = `/api/files/${f._id}/download`;
-        // add download attribute as a hint when same-origin
         try { dlA.setAttribute('download', ''); } catch(e){}
       } else if (f.url) {
-        // if f.url exists but is not same origin, we still provide link (browser may open or download based on headers)
         dlA.href = f.url;
-        // if it's same-origin and a file resource we can hint download
         try { dlA.setAttribute('download', ''); } catch(e){}
       } else {
         dlA.href = '#';
@@ -197,10 +205,11 @@
     });
 
     resultsSection.appendChild(grid);
-    resultsCount.textContent = `${allItems.length} ressource(s) affichée(s)`;
+    if (resultsCount) resultsCount.textContent = `${allItems.length} ressource(s) affichée(s)`;
   }
 
   function updateTagCloud() {
+    if (!tagCloud) return;
     tagCloud.innerHTML = '';
     const counts = {};
     allItems.forEach(f => { if (Array.isArray(f.tags)) f.tags.forEach(t => counts[t] = (counts[t] || 0) + 1); });
@@ -211,7 +220,7 @@
       btn.className = 'tag-chip';
       btn.textContent = `${t}`;
       btn.addEventListener('click', () => {
-        filterKey.value = t;
+        if (filterKey) filterKey.value = t;
         applyFilters();
         window.scrollTo({ top: resultsSection.offsetTop - 120, behavior: 'smooth' });
       });
@@ -221,7 +230,7 @@
 
   function setLoading(v) {
     loading = !!v;
-    loadMoreBtn.disabled = loading;
+    if (loadMoreBtn) loadMoreBtn.disabled = loading;
     if (loading) {
       if (!resultsSection.querySelector('.loading-indicator')) {
         resultsSection.innerHTML = '<p class="small loading-indicator">Chargement...</p>';
@@ -239,11 +248,11 @@
     allItems = [];
 
     activeFilters = {
-      class: filterClass.value || '',
-      subject: filterSubject.value || '',
-      trimester: filterTrimester.value || '',
-      type: filterType.value || '',
-      q: (filterKey.value || '').trim()
+      class: filterClass ? filterClass.value : '',
+      subject: filterSubject ? filterSubject.value : '',
+      trimester: filterTrimester ? filterTrimester.value : '',
+      type: filterType ? filterType.value : '',
+      q: (filterKey && filterKey.value ? filterKey.value.trim() : '')
     };
 
     const pagesNeeded = Math.ceil(INITIAL_WANTED / SERVER_PAGE_SIZE);
@@ -263,7 +272,7 @@
     } catch (err) {
       console.error('initialLoad error', err);
       resultsSection.innerHTML = `<p class="small">Erreur lors du chargement : ${escapeHtml(err.message)}</p>`;
-      resultsCount.textContent = 'Erreur';
+      if (resultsCount) resultsCount.textContent = 'Erreur';
     } finally {
       setLoading(false);
     }
@@ -272,8 +281,8 @@
   async function loadMore() {
     if (loading) return;
     if (serverTotalPages !== Infinity && serverPagePointer >= serverTotalPages) {
-      loadMoreNote.textContent = 'Toutes les ressources ont été chargées.';
-      loadMoreBtn.disabled = true;
+      if (loadMoreNote) loadMoreNote.textContent = 'Toutes les ressources ont été chargées.';
+      if (loadMoreBtn) loadMoreBtn.disabled = true;
       return;
     }
 
@@ -288,13 +297,14 @@
       updateLoadMoreVisibility();
     } catch (err) {
       console.error('loadMore error', err);
-      loadMoreNote.textContent = 'Erreur lors du chargement.';
+      if (loadMoreNote) loadMoreNote.textContent = 'Erreur lors du chargement.';
     } finally {
       setLoading(false);
     }
   }
 
   function updateLoadMoreVisibility() {
+    if (!loadMoreBtn || !loadMoreNote) return;
     if (serverTotalPages === Infinity) {
       loadMoreBtn.disabled = false;
       loadMoreNote.textContent = '';
@@ -311,21 +321,21 @@
 
   function applyFilters() { initialLoad(); }
   function clearFilters() {
-    filterClass.value = '';
-    filterSubject.value = '';
-    filterTrimester.value = '';
-    filterType.value = '';
-    filterKey.value = '';
-    sortBy.value = 'date_desc';
+    if (filterClass) filterClass.value = '';
+    if (filterSubject) filterSubject.value = '';
+    if (filterTrimester) filterTrimester.value = '';
+    if (filterType) filterType.value = '';
+    if (filterKey) filterKey.value = '';
+    if (sortBy) sortBy.value = 'date_desc';
     initialLoad();
   }
 
-  // event wiring
-  btnFilter.addEventListener('click', (e) => { e.preventDefault(); applyFilters(); });
-  btnClear.addEventListener('click', (e) => { e.preventDefault(); clearFilters(); });
-  loadMoreBtn.addEventListener('click', (e) => { e.preventDefault(); loadMore(); });
-  filterKey.addEventListener('input', debounce(() => applyFilters(), 350));
-  sortBy.addEventListener('change', () => renderAllItems());
+  // event wiring (defensive)
+  if (btnFilter) btnFilter.addEventListener('click', (e) => { e.preventDefault(); applyFilters(); });
+  if (btnClear) btnClear.addEventListener('click', (e) => { e.preventDefault(); clearFilters(); });
+  if (loadMoreBtn) loadMoreBtn.addEventListener('click', (e) => { e.preventDefault(); loadMore(); });
+  if (filterKey) filterKey.addEventListener('input', debounce(() => applyFilters(), 350));
+  if (sortBy) sortBy.addEventListener('change', () => renderAllItems());
 
   // initial on DOM ready
   window.addEventListener('DOMContentLoaded', () => {
