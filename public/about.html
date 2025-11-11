@@ -53,8 +53,17 @@
       color:#fff; box-shadow: 0 10px 28px rgba(230,80,69,0.10);
     }
 
-    /* hamburger - hidden desktop, visible mobile */
-    .nav-toggle{display:none;background:transparent;border:0;color:#fff;font-size:20px;padding:6px;align-items:center}
+    /* hamburger - hidden on desktop, visible mobile */
+    .nav-toggle{
+      display:none;
+      background:transparent;
+      border:0;
+      color:#fff;
+      font-size:20px;
+      padding:6px;
+      align-items:center;
+      cursor:pointer;
+    }
 
     /* ====== HERO ====== */
     .hero-banner{padding:36px 0}
@@ -68,10 +77,7 @@
     .hero-content p.description{margin-top:10px;color:var(--muted)}
 
     /* hero visual (carousel confined) */
-    .hero-visual{
-      flex:0 0 460px;width:460px;height:300px;border-radius:14px;overflow:hidden;
-      box-shadow:var(--shadow-2);background:linear-gradient(180deg,#f5f9ff,#eef7ff);position:relative;min-width:260px
-    }
+    .hero-visual{flex:0 0 460px;width:460px;height:300px;border-radius:14px;overflow:hidden;box-shadow:var(--shadow-2);background:linear-gradient(180deg,#f5f9ff,#eef7ff);position:relative;min-width:260px}
     .hero-visual .image{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;opacity:0;transform:scale(1.03);transition:opacity .48s ease,transform .48s ease}
     .hero-visual .image.active{opacity:1;transform:scale(1)}
     .carousel-controls{position:absolute;left:8px;right:8px;bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;z-index:30;padding:0 8px}
@@ -125,22 +131,37 @@
       .service-list{grid-template-columns:1fr}
       .nav-actions{display:none}
       .nav-toggle{display:flex} /* show hamburger */
-      /* mobile menu is absolute and out of the flow (prevents blue bar) */
-      nav.main-nav .nav-list{display:none}
-      nav.main-nav.open .nav-list{
-        display:flex;
+
+      /* MOBILE MENU: controlled, narrower, centered under header */
+      nav.main-nav .nav-list{
+        display:none;
         flex-direction:column;
-        background:linear-gradient(180deg,rgba(59,21,88,1), rgba(47,17,72,1));
-        position:absolute;
-        top:100%;
-        left:0;
-        right:0;
-        padding:12px;
-        border-bottom-left-radius:10px;
-        border-bottom-right-radius:10px;
-        box-shadow:0 12px 30px rgba(3,15,30,0.18);
+        position:fixed;
+        top:72px;
+        left:50%;
+        transform:translateX(-50%);
+        width:calc(100% - 48px);
+        max-width:520px;
+        padding:18px;
+        gap:8px;
+        background: linear-gradient(180deg, rgba(59,21,88,0.98), rgba(47,17,72,0.95));
+        border-radius:12px;
+        box-shadow: 0 22px 60px rgba(8,40,80,0.28);
+        z-index:2000;
       }
-      nav.main-nav .nav-list li{padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+      nav.main-nav.open .nav-list{display:flex}
+      nav.main-nav .nav-list li{list-style:none;padding:8px 0;border-radius:8px}
+      nav.main-nav .nav-list .nav-link{display:block;padding:12px 14px;text-align:center}
+
+      /* overlay to dim background when menu open (via pseudo on nav) */
+      nav.main-nav.open::after{
+        content:'';
+        position:fixed;
+        inset:0;
+        background: rgba(4,20,40,0.45);
+        z-index:1500;
+      }
+
       .carousel-btn{padding:10px}
       .carousel-indicators button{width:12px;height:12px}
       .contact-icon{width:40px;height:40px}
@@ -153,8 +174,15 @@
       .contact-icon{width:38px;height:38px}
     }
 
-    /* ensure no horizontal overflow from long nav items */
+    /* prevent long nav items overflow */
     .nav-list li,.nav-actions a{white-space:nowrap}
+
+    /* remove any pseudo-element artifacts inside header and hero */
+    .site-header *::before,
+    .site-header *::after,
+    .hero-visual *::before,
+    .hero-visual *::after { display:none !important; content: none !important; border:0 !important; outline:0 !important; box-shadow:none !important; }
+
   </style>
 </head>
 <body>
@@ -170,6 +198,11 @@
         </div>
       </a>
 
+      <!-- Burger button placed before nav so positioning is consistent -->
+      <button id="nav-toggle" class="nav-toggle" aria-controls="main-nav" aria-expanded="false" aria-label="Ouvrir le menu">
+        <svg width="22" height="14" viewBox="0 0 24 14" fill="none" aria-hidden="true"><rect width="24" height="2" rx="1" fill="#fff"/><rect y="6" width="24" height="2" rx="1" fill="#fff"/><rect y="12" width="24" height="2" rx="1" fill="#fff"/></svg>
+      </button>
+
       <nav id="main-nav" class="main-nav" role="navigation" aria-label="Navigation principale">
         <ul class="nav-list" id="nav-list" role="menubar">
           <li role="none"><a class="nav-link" role="menuitem" href="index.html">Accueil</a></li>
@@ -181,9 +214,6 @@
 
       <div class="nav-actions">
         <a class="btn primary-cta" href="contact.html">Réserver une séance</a>
-        <button id="nav-toggle" class="nav-toggle" aria-controls="main-nav" aria-expanded="false" aria-label="Ouvrir le menu">
-          <svg width="22" height="14" viewBox="0 0 24 14" fill="none" aria-hidden="true"><rect width="24" height="2" rx="1" fill="#fff"/><rect y="6" width="24" height="2" rx="1" fill="#fff"/><rect y="12" width="24" height="2" rx="1" fill="#fff"/></svg>
-        </button>
       </div>
     </div>
   </header>
@@ -220,10 +250,6 @@
   <!-- MAIN -->
   <main class="container" style="margin-top:18px;">
     <!-- (contenu identique au tien, inchangé) -->
-    <!-- About intro, services, FAQ, CTA ... (copier tel quel depuis ton code si nécessaire) -->
-    <!-- Pour ne pas alourdir la réponse j'ai conservé ton contenu tel qu'il est — seul l'en-tête, hero et scripts sont critiques -->
-    <!-- Place ici le reste de ton HTML / sections (about-intro, about-grid, faq, about-cta) -->
-    <!-- BEGIN content copy -->
     <section class="about-intro">
       <div class="intro-left">
         <h2 class="section-title">Un accompagnement sur mesure</h2>
@@ -315,11 +341,10 @@
       <div><h3 style="margin:0">Prêt à commencer ?</h3><p class="small" style="margin:6px 0 0">Demandez votre bilan pédagogique gratuit — nous construisons un plan clair et efficace.</p></div>
       <div><a class="btn primary-cta" href="contact.html">Demander un bilan gratuit</a></div>
     </section>
-    <!-- END content copy -->
   </main>
 
   <!-- WHATSAPP FLOAT -->
-  <a href="https://wa.me/22897974064" id="whatsapp-fab" class="whatsapp-fab" target="_blank" rel="noopener" aria-label="Contacter sur WhatsApp">
+  <a href="https://wa.me/<TON_NUMERO>" id="whatsapp-fab" class="whatsapp-fab" target="_blank" rel="noopener" aria-label="Contacter sur WhatsApp">
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20.52 3.48A11.94 11.94 0 0012 0C5.373 0 .063 5.31.063 11.94c0 2.106.55 4.16 1.593 5.977L0 24l6.354-1.66A11.93 11.93 0 0012 23.88c6.627 0 11.941-5.313 11.941-11.94 0-3.19-1.246-6.19-3.42-8.46z" fill="#25D366"/><path d="M17.36 14.64c-.3-.15-1.77-.87-2.05-.97-.28-.1-.48-.15-.69.15-.21.3-.81.97-.99 1.17-.18.2-.36.22-.66.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.18-.3-.02-.46.13-.61.14-.14.3-.36.45-.54.15-.18.2-.3.3-.5.1-.2 0-.37-.05-.52-.05-.15-.69-1.67-.95-2.28-.25-.6-.5-.52-.69-.52-.18 0-.4-.02-.61-.02-.2 0-.52.07-.8.37-.28.3-1.05 1.02-1.05 2.48 0 1.46 1.08 2.87 1.23 3.07.15.2 2.11 3.22 5.11 4.52 3 1.3 3 0.86 3.51 0.81.5-.05 1.62-.66 1.85-1.3.23-.64.23-1.18.16-1.3-.07-.12-.28-.18-.58-.33" fill="#fff"/></svg>
   </a>
 
@@ -361,7 +386,126 @@
     </div>
   </footer>
 
-  <!-- include updated JS -->
-  <script src="js/about.js" defer></script>
+  <!-- inline scripts (menu, carousel, faq) - kept inside the same file as requested -->
+  <script>
+    (function(){
+      /* NAV / BURGER: toggle on click, close on second click, close on link click, close on Escape, click outside closes */
+      const btn = document.getElementById('nav-toggle');
+      const nav = document.getElementById('main-nav');
+      const navList = document.getElementById('nav-list');
+
+      function isOpen() { return nav.classList.contains('open'); }
+      function openNav() {
+        nav.classList.add('open');
+        btn.setAttribute('aria-expanded','true');
+        // prevent body scroll while menu open on small screens
+        document.documentElement.style.overflow = 'hidden';
+      }
+      function closeNav() {
+        nav.classList.remove('open');
+        btn.setAttribute('aria-expanded','false');
+        document.documentElement.style.overflow = '';
+      }
+      if(btn && nav){
+        btn.addEventListener('click', (e) => {
+          // toggle
+          if (isOpen()) closeNav(); else openNav();
+          e.stopPropagation();
+        });
+
+        // close when clicking a nav link
+        nav.querySelectorAll('.nav-link').forEach(a => {
+          a.addEventListener('click', () => {
+            if (isOpen()) closeNav();
+          });
+        });
+
+        // click outside the menu closes it
+        document.addEventListener('click', (e) => {
+          if (!isOpen()) return;
+          // if click is inside nav or on button, ignore (we handled button already)
+          if (nav.contains(e.target) || btn.contains(e.target)) return;
+          closeNav();
+        });
+
+        // Escape closes menu
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && isOpen()) closeNav();
+        });
+      }
+    })();
+  </script>
+
+  <script>
+    /* HERO CAROUSEL: same behaviour as index (autoplay + indicators + touch + pause on hover) */
+    (function(){
+      const visual = document.getElementById('hero-visual');
+      if (!visual) return;
+      const slides = Array.from(visual.querySelectorAll('.image'));
+      const indicatorsWrap = document.getElementById('carousel-indicators');
+      const prevBtn = document.getElementById('carousel-prev');
+      const nextBtn = document.getElementById('carousel-next');
+      let idx = slides.findIndex(s => s.classList.contains('active'));
+      if (idx < 0) idx = 0;
+      let timer = null;
+      const AUTOPLAY = 4500;
+
+      function update() {
+        slides.forEach((s,i)=> s.classList.toggle('active', i===idx));
+        if (indicatorsWrap) {
+          indicatorsWrap.innerHTML = '';
+          slides.forEach((_,i)=> {
+            const b = document.createElement('button');
+            b.type='button';
+            b.className = i===idx ? 'active' : '';
+            b.setAttribute('aria-label', 'Image ' + (i+1));
+            b.addEventListener('click', ()=> { idx=i; update(); restart(); });
+            indicatorsWrap.appendChild(b);
+          });
+        }
+      }
+      function next(){ idx = (idx+1)%slides.length; update(); }
+      function prev(){ idx = (idx-1+slides.length)%slides.length; update(); }
+      function start(){ stop(); timer = setInterval(next, AUTOPLAY); }
+      function stop(){ if (timer) { clearInterval(timer); timer=null; } }
+      function restart(){ stop(); start(); }
+
+      prevBtn && prevBtn.addEventListener('click', ()=> { prev(); restart(); });
+      nextBtn && nextBtn.addEventListener('click', ()=> { next(); restart(); });
+
+      (function(){
+        let sx=0;
+        visual.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+        visual.addEventListener('touchend', e => {
+          const dx = e.changedTouches[0].clientX - sx;
+          if (Math.abs(dx) > 40) { dx < 0 ? next() : prev(); restart(); }
+        }, {passive:true});
+      })();
+
+      update();
+      start();
+      visual.addEventListener('mouseenter', stop);
+      visual.addEventListener('mouseleave', start);
+    })();
+  </script>
+
+  <script>
+    /* FAQ toggle behaviour (keeps your original markup) */
+    (function(){
+      document.querySelectorAll('.faq-question').forEach(q => {
+        q.addEventListener('click', () => {
+          const item = q.closest('.faq-item');
+          if (!item) return;
+          item.classList.toggle('open');
+        });
+        q.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            q.click();
+          }
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

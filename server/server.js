@@ -1,16 +1,4 @@
 // server/server.js
-/**
- * Serveur Express complet et mis à jour :
- * - /api/admin/login, /api/admin/verify (JWT)
- * - POST /api/upload (protected) -> Cloudinary + meta MongoDB -> retourne meta avec _id (string)
- * - GET /api/files -> pagination + filtres -> retourne { items, total, page, pageSize, totalPages }
- * - GET /api/files/:id -> retourne meta (utilitaire)
- * - GET /api/files/:id/download -> proxy + force download (original filename + Content-Type)
- * - POST /api/contact -> sauvegarde en DB + envoi email (nodemailer)
- *
- * Remarque : Assure-toi d'avoir les variables d'env nécessaires.
- */
-
 require('dotenv').config();
 
 const express = require('express');
@@ -51,36 +39,35 @@ cloudinary.config({
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || '',
   port: Number(process.env.SMTP_PORT || 465),
-  secure: String(process.env.SMTP_SECURE || (process.env.SMTP_PORT === '465')) === 'true' || Number(process.env.SMTP_PORT || 465) === 465,
+  secure: (String(process.env.SMTP_SECURE || '') === 'true') || Number(process.env.SMTP_PORT || 465) === 465,
   auth: {
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || ''
   }
 });
 
-// ---------------- MongoDB connexion ----------------
-let db = null;
-let metaColl = null;
-let contactsColl = null;
+// ---------------- MongoDB connexion (cached for serverless) ----------------
+let cachedClient = null;
+let cachedDb = null;
 
-async function connectMongo() {
+async function getDb() {
+  if (cachedDb) return cachedDb;
   if (!MONGO_URL) {
-    console.error('❌ MONGO_URL manquant dans .env');
-    process.exit(1);
+    console.warn('⚠️ MONGO_URL not set. Database routes will fail until MONGO_URL is configured.');
+    throw new Error('MONGO_URL missing');
   }
-  const client = new MongoClient(MONGO_URL, { useUnifiedTopology: true });
-  await client.connect();
-  db = client.db(DB_NAME);
-  metaColl = db.collection('files_meta');
-  contactsColl = db.collection('contacts');
-  // Indexes optionally
-  await metaColl.createIndex({ title: "text", tags: "text", subject: 1, class: 1 });
+  if (!cachedClient) {
+    const client = new MongoClient(MONGO_URL, { useUnifiedTopology: true });
+    await client.connect();
+    cachedClient = client;
+  }
+  cachedDb = cachedClient.db(DB_NAME);
+  try {
+    await cachedDb.collection('files_meta').createIndex({ title: "text", tags: "text", subject: 1, class: 1 });
+  } catch (e) { /* ignore index errors */ }
   console.log('✅ MongoDB connecté -> DB:', DB_NAME);
+  return cachedDb;
 }
-connectMongo().catch(err => {
-  console.error('❌ Erreur connexion MongoDB:', err);
-  process.exit(1);
-});
 
 // ---------------- Auth middleware ----------------
 function adminAuth(req, res, next) {
@@ -102,13 +89,16 @@ function adminAuth(req, res, next) {
 function safeIdString(id) {
   try { return (id instanceof ObjectId) ? id.toString() : String(id); } catch { return String(id); }
 }
+function escapeHtml(str = '') {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
 
 // ---------------- Routes ----------------
 
-/**
- * POST /api/admin/login
- * Body: { username, password }
- */
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ error: 'Missing credentials' });
@@ -120,32 +110,22 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
-/**
- * GET /api/admin/verify
- * Header: Authorization: Bearer <token>
- */
 app.get('/api/admin/verify', adminAuth, (req, res) => {
   res.json({ ok: true, user: req.user });
 });
 
-/**
- * POST /api/upload
- * Protected: adminAuth
- * multipart/form-data: file + fields (title,class,subject,trimester,type,tags)
- * Uploads to Cloudinary then inserts meta into Mongo and returns meta (with _id as string)
- */
 app.post('/api/upload', adminAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Fichier manquant' });
+    const db = await getDb();
+    const metaColl = db.collection('files_meta');
 
     const mimetype = req.file.mimetype || 'application/octet-stream';
-    // Use resource_type image/raw depending on mime
     const resourceType = mimetype.startsWith('image/') ? 'image' : 'raw';
 
     const bufferStream = new stream.PassThrough();
     bufferStream.end(req.file.buffer);
 
-    // upload_stream wrapper as promise
     const uploadResult = await new Promise((resolve, reject) => {
       const opts = { folder: 'rep-cours', resource_type: resourceType, overwrite: false };
       const ups = cloudinary.uploader.upload_stream(opts, (error, result) => {
@@ -155,7 +135,6 @@ app.post('/api/upload', adminAuth, upload.single('file'), async (req, res) => {
       bufferStream.pipe(ups);
     });
 
-    // Build metadata
     const meta = {
       title: (req.body.title || req.file.originalname || '').trim(),
       originalFilename: req.file.originalname || '',
@@ -176,11 +155,9 @@ app.post('/api/upload', adminAuth, upload.single('file'), async (req, res) => {
       }
     };
 
-    // Insert and return meta with _id as string
     const insertRes = await metaColl.insertOne(meta);
     meta._id = insertRes.insertedId.toString();
 
-    // Optional: return a cleaned meta (avoid returning full cloudinary raw provider)
     const returnMeta = {
       _id: meta._id,
       title: meta.title,
@@ -205,16 +182,11 @@ app.post('/api/upload', adminAuth, upload.single('file'), async (req, res) => {
   }
 });
 
-/**
- * GET /api/files
- * Query:
- *   page (1), pageSize (12)
- *   class, subject, trimester, type, tag, q (search)
- * Returns: { items, total, page, pageSize, totalPages }
- * Each item._id is string
- */
 app.get('/api/files', async (req, res) => {
   try {
+    const db = await getDb();
+    const metaColl = db.collection('files_meta');
+
     const page = Math.max(1, Number(req.query.page) || 1);
     const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize) || 12));
     const filter = {};
@@ -241,25 +213,22 @@ app.get('/api/files', async (req, res) => {
 
     const rawItems = await metaColl.find(filter).sort({ uploadedAt: -1 }).skip(skip).limit(pageSize).toArray();
 
-    // Convert ObjectId to string and remove heavy cloudinary.provider_raw if present
-    const items = rawItems.map(it => {
-      return {
-        _id: it._id ? it._id.toString() : undefined,
-        title: it.title,
-        originalFilename: it.originalFilename,
-        mimetype: it.mimetype,
-        resource_type: it.resource_type,
-        class: it.class,
-        subject: it.subject,
-        trimester: it.trimester,
-        type: it.type,
-        tags: it.tags || [],
-        url: it.url,
-        size: it.size,
-        uploadedAt: it.uploadedAt,
-        uploadedBy: it.uploadedBy
-      };
-    });
+    const items = rawItems.map(it => ({
+      _id: it._id ? it._id.toString() : undefined,
+      title: it.title,
+      originalFilename: it.originalFilename,
+      mimetype: it.mimetype,
+      resource_type: it.resource_type,
+      class: it.class,
+      subject: it.subject,
+      trimester: it.trimester,
+      type: it.type,
+      tags: it.tags || [],
+      url: it.url,
+      size: it.size,
+      uploadedAt: it.uploadedAt,
+      uploadedBy: it.uploadedBy
+    }));
 
     return res.json({ items, total, page, pageSize, totalPages });
   } catch (err) {
@@ -268,17 +237,15 @@ app.get('/api/files', async (req, res) => {
   }
 });
 
-/**
- * GET /api/files/:id
- * Return single meta (utility)
- */
 app.get('/api/files/:id', async (req, res) => {
   try {
+    const db = await getDb();
+    const metaColl = db.collection('files_meta');
+
     const metaId = req.params.id;
     if (!ObjectId.isValid(metaId)) return res.status(400).json({ error: 'Invalid id' });
     const it = await metaColl.findOne({ _id: new ObjectId(metaId) });
     if (!it) return res.status(404).json({ error: 'Not found' });
-    // convert _id to string
     it._id = it._id.toString();
     return res.json({ item: it });
   } catch (err) {
@@ -287,12 +254,11 @@ app.get('/api/files/:id', async (req, res) => {
   }
 });
 
-/**
- * GET /api/files/:id/download
- * Proxy remote file (Cloudinary) and force download with original filename/mimetype
- */
 app.get('/api/files/:id/download', async (req, res) => {
   try {
+    const db = await getDb();
+    const metaColl = db.collection('files_meta');
+
     const metaId = req.params.id;
     if (!ObjectId.isValid(metaId)) return res.status(400).json({ error: 'Invalid id' });
 
@@ -302,9 +268,7 @@ app.get('/api/files/:id/download', async (req, res) => {
     const fileUrl = meta.url;
     const filename = meta.originalFilename || (fileUrl.split('/').pop() || 'file');
 
-    // Set headers to force download in original format
     res.setHeader('Content-Type', meta.mimetype || 'application/octet-stream');
-    // protect filename header (avoid injection)
     const safeFilename = filename.replace(/["\\]/g, '');
     res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
     res.setHeader('Cache-Control', 'public, max-age=86400');
@@ -329,21 +293,17 @@ app.get('/api/files/:id/download', async (req, res) => {
   }
 });
 
-/**
- * POST /api/contact
- * Save contact in DB and send mail via nodemailer
- * Body: { name, email, subject?, message }
- */
 app.post('/api/contact', async (req, res) => {
   try {
+    const db = await getDb();
+    const contactsColl = db.collection('contacts');
+
     const { name, email, subject, message } = req.body || {};
     if (!name || !email || !message) return res.status(400).json({ error: 'Missing fields' });
 
-    // Save in DB
     const doc = { name, email, subject: subject || '', message, receivedAt: new Date() };
     const insertRes = await contactsColl.insertOne(doc);
 
-    // Send email
     const mailOptions = {
       from: `"Rep Cours" <${process.env.SMTP_USER || 'no-reply@example.com'}>`,
       to: CONTACT_RECEIVER,
@@ -354,9 +314,8 @@ app.post('/api/contact', async (req, res) => {
 
     try {
       const info = await transporter.sendMail(mailOptions);
-      console.log('Contact email sent:', info.messageId);
+      console.log('Contact email sent:', info && info.messageId ? info.messageId : '(no-id)');
     } catch (mailErr) {
-      // Log and continue — don't fail the whole request if mail provider has a transient error
       console.error('Erreur envoi mail contact:', mailErr && mailErr.message ? mailErr.message : mailErr);
     }
 
@@ -367,15 +326,23 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-// ----------------- Start server -----------------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
-
-/* small helper */
-function escapeHtml(str = '') {
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
+// If the file is run directly (dev), start the server.
+// When used in serverless (imported from api/index.js), this block won't run.
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  (async () => {
+    try {
+      // ensure DB connect attempt (will warn if MONGO_URL missing)
+      await getDb();
+    } catch (err) {
+      console.error('⚠️ getDb() failed at startup (dev). Some routes will error until DB configured:', err && err.message ? err.message : err);
+      // continue anyway so static pages and non-db routes still respond
+    }
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  })();
 }
+
+// Export the app for serverless wrapper or tests
+module.exports = app;
