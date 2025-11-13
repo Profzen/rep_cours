@@ -14,8 +14,15 @@ const url = require('url');
 const path = require('path');
 
 const app = express();
+
+// Body parsing
 app.use(express.json({ limit: '800kb' }));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static during local standalone dev (Vercel serves /public automatically in prod)
+if (process.env.NODE_ENV !== 'production') {
+  app.use(express.static(path.join(process.cwd(), 'public')));
+}
 
 // ---------------- config ----------------
 const MONGO_URL = process.env.MONGO_URL;
@@ -40,7 +47,7 @@ cloudinary.config({
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || '',
   port: Number(process.env.SMTP_PORT || 465),
-  secure: String(process.env.SMTP_SECURE || (process.env.SMTP_PORT === '465')) === 'true' || Number(process.env.SMTP_PORT || 465) === 465,
+  secure: (String(process.env.SMTP_SECURE || '') === 'true') || Number(process.env.SMTP_PORT || 465) === 465,
   auth: {
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || ''
@@ -51,30 +58,42 @@ const transporter = nodemailer.createTransport({
 let db = null;
 let metaColl = null;
 let contactsColl = null;
+let _mongoConnecting = false;
 
 async function connectMongo() {
   if (!MONGO_URL) {
-    console.warn('⚠️ MONGO_URL non fourni — les routes db dépendantes retourneront des erreurs. Configure la variable d\'env MONGO_URL.');
+    console.warn('⚠️ MONGO_URL non fourni — routes DB dépendantes utiliseront un fallback ou retourneront 503.');
     return;
   }
+  if (db || _mongoConnecting) return;
+  _mongoConnecting = true;
   try {
     const client = new MongoClient(MONGO_URL, { useUnifiedTopology: true });
     await client.connect();
     db = client.db(DB_NAME);
     metaColl = db.collection('files_meta');
     contactsColl = db.collection('contacts');
+    // create indexes idempotent
     await metaColl.createIndex({ title: "text", tags: "text", subject: 1, class: 1 });
     console.log('✅ MongoDB connecté -> DB:', DB_NAME);
   } catch (err) {
     console.error('❌ Erreur connexion MongoDB:', err && err.message ? err.message : err);
-    // do not exit — let serverless wrapper or calling process decide
+    // don't exit — serverless environment or dev without DB should still import app
+  } finally {
+    _mongoConnecting = false;
   }
 }
 
-// call connectMongo immediately (it is async)
-connectMongo().catch(err => {
-  console.error('Erreur lors du démarrage connexion Mongo:', err && err.message ? err.message : err);
-});
+// try to connect at startup (non-blocking)
+connectMongo().catch(err => console.error('connectMongo startup error:', err && err.message ? err.message : err));
+
+// Middleware helper: try lazy reconnect then 503 if still not available
+async function requireDb(req, res, next) {
+  if (metaColl && contactsColl) return next();
+  await connectMongo();
+  if (metaColl && contactsColl) return next();
+  return res.status(503).json({ error: 'DB non disponible' });
+}
 
 // ---------------- Auth middleware ----------------
 function adminAuth(req, res, next) {
@@ -96,9 +115,16 @@ function adminAuth(req, res, next) {
 function safeIdString(id) {
   try { return (id instanceof ObjectId) ? id.toString() : String(id); } catch { return String(id); }
 }
+function escapeHtml(str = '') {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-/* ---------- ROUTES (unchanged logic) ---------- */
+// ---------- ROUTES ----------
 
+// health-check
+app.get('/', (req, res) => res.send('Rep Cours API running'));
+
+// admin login (no DB required)
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ error: 'Missing credentials' });
@@ -110,11 +136,13 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
+// admin verify (protected)
 app.get('/api/admin/verify', adminAuth, (req, res) => {
   res.json({ ok: true, user: req.user });
 });
 
-app.post('/api/upload', adminAuth, upload.single('file'), async (req, res) => {
+// upload (requires DB & auth)
+app.post('/api/upload', adminAuth, requireDb, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Fichier manquant' });
 
@@ -153,7 +181,7 @@ app.post('/api/upload', adminAuth, upload.single('file'), async (req, res) => {
       }
     };
 
-    const insertRes = await (metaColl ? metaColl.insertOne(meta) : Promise.reject(new Error('DB not connected')));
+    const insertRes = await metaColl.insertOne(meta);
     meta._id = insertRes.insertedId.toString();
 
     const returnMeta = {
@@ -180,64 +208,81 @@ app.post('/api/upload', adminAuth, upload.single('file'), async (req, res) => {
   }
 });
 
+// list files (requires DB). If DB absent, return useful fallback sample (so frontend works without DB)
 app.get('/api/files', async (req, res) => {
-  try {
-    if (!metaColl) return res.status(503).json({ error: 'DB non disponible' });
+  // if DB is available, use it; otherwise fallback to sample data
+  if (metaColl) {
+    try {
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize) || 12));
+      const filter = {};
 
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize) || 12));
-    const filter = {};
+      if (req.query.class) filter.class = req.query.class;
+      if (req.query.subject) filter.subject = req.query.subject;
+      if (req.query.trimester) filter.trimester = Number(req.query.trimester);
+      if (req.query.type) filter.type = req.query.type;
+      if (req.query.tag) filter.tags = req.query.tag;
 
-    if (req.query.class) filter.class = req.query.class;
-    if (req.query.subject) filter.subject = req.query.subject;
-    if (req.query.trimester) filter.trimester = Number(req.query.trimester);
-    if (req.query.type) filter.type = req.query.type;
-    if (req.query.tag) filter.tags = req.query.tag;
-
-    if (req.query.q) {
-      const q = String(req.query.q || '').trim();
-      if (q.length > 0) {
-        filter.$or = [
-          { title: { $regex: q, $options: 'i' } },
-          { tags: { $regex: q, $options: 'i' } }
-        ];
+      if (req.query.q) {
+        const q = String(req.query.q || '').trim();
+        if (q.length > 0) {
+          filter.$or = [
+            { title: { $regex: q, $options: 'i' } },
+            { tags: { $regex: q, $options: 'i' } }
+          ];
+        }
       }
+
+      const total = await metaColl.countDocuments(filter);
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const skip = (page - 1) * pageSize;
+
+      const rawItems = await metaColl.find(filter).sort({ uploadedAt: -1 }).skip(skip).limit(pageSize).toArray();
+
+      const items = rawItems.map(it => ({
+        _id: it._id ? it._id.toString() : undefined,
+        title: it.title,
+        originalFilename: it.originalFilename,
+        mimetype: it.mimetype,
+        resource_type: it.resource_type,
+        class: it.class,
+        subject: it.subject,
+        trimester: it.trimester,
+        type: it.type,
+        tags: it.tags || [],
+        url: it.url,
+        size: it.size,
+        uploadedAt: it.uploadedAt,
+        uploadedBy: it.uploadedBy
+      }));
+
+      return res.json({ items, total, page, pageSize, totalPages });
+    } catch (err) {
+      console.error('List files error:', err && err.message ? err.message : err);
+      return res.status(500).json({ error: 'Erreur lecture fichiers' });
     }
-
-    const total = await metaColl.countDocuments(filter);
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
-    const skip = (page - 1) * pageSize;
-
-    const rawItems = await metaColl.find(filter).sort({ uploadedAt: -1 }).skip(skip).limit(pageSize).toArray();
-
-    const items = rawItems.map(it => ({
-      _id: it._id ? it._id.toString() : undefined,
-      title: it.title,
-      originalFilename: it.originalFilename,
-      mimetype: it.mimetype,
-      resource_type: it.resource_type,
-      class: it.class,
-      subject: it.subject,
-      trimester: it.trimester,
-      type: it.type,
-      tags: it.tags || [],
-      url: it.url,
-      size: it.size,
-      uploadedAt: it.uploadedAt,
-      uploadedBy: it.uploadedBy
-    }));
-
-    return res.json({ items, total, page, pageSize, totalPages });
-  } catch (err) {
-    console.error('List files error:', err && err.message ? err.message : err);
-    return res.status(500).json({ error: 'Erreur lecture fichiers' });
   }
+
+  // --- FALLBACK (no DB) ---
+  // This makes the frontend usable in environments without Mongo (dev, quick deploys).
+  const sample = [{
+    _id: 'test-1',
+    title: 'Exemple - ressource test',
+    url: '',
+    tags: ['test'],
+    uploadedAt: new Date().toISOString()
+  }];
+
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize) || 20));
+  const total = sample.length;
+  const totalPages = 1;
+  return res.json({ items: sample.slice(0, pageSize), total, page, pageSize, totalPages });
 });
 
-app.get('/api/files/:id', async (req, res) => {
+// single meta (requires DB)
+app.get('/api/files/:id', requireDb, async (req, res) => {
   try {
-    if (!metaColl) return res.status(503).json({ error: 'DB non disponible' });
-
     const metaId = req.params.id;
     if (!ObjectId.isValid(metaId)) return res.status(400).json({ error: 'Invalid id' });
     const it = await metaColl.findOne({ _id: new ObjectId(metaId) });
@@ -250,10 +295,9 @@ app.get('/api/files/:id', async (req, res) => {
   }
 });
 
-app.get('/api/files/:id/download', async (req, res) => {
+// download proxy (requires DB)
+app.get('/api/files/:id/download', requireDb, async (req, res) => {
   try {
-    if (!metaColl) return res.status(503).json({ error: 'DB non disponible' });
-
     const metaId = req.params.id;
     if (!ObjectId.isValid(metaId)) return res.status(400).json({ error: 'Invalid id' });
 
@@ -288,11 +332,11 @@ app.get('/api/files/:id/download', async (req, res) => {
   }
 });
 
-app.post('/api/contact', async (req, res) => {
+// contact (requires DB)
+app.post('/api/contact', requireDb, async (req, res) => {
   try {
     const { name, email, subject, message } = req.body || {};
     if (!name || !email || !message) return res.status(400).json({ error: 'Missing fields' });
-    if (!contactsColl) return res.status(503).json({ error: 'DB non disponible' });
 
     const doc = { name, email, subject: subject || '', message, receivedAt: new Date() };
     const insertRes = await contactsColl.insertOne(doc);
@@ -307,8 +351,9 @@ app.post('/api/contact', async (req, res) => {
 
     try {
       const info = await transporter.sendMail(mailOptions);
-      console.log('Contact email sent:', info.messageId);
+      console.log('Contact email sent:', info && info.messageId ? info.messageId : '(no id)');
     } catch (mailErr) {
+      // log and continue
       console.error('Erreur envoi mail contact:', mailErr && mailErr.message ? mailErr.message : mailErr);
     }
 
@@ -319,23 +364,13 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-// Serve a basic health-check at root (helpful for vercel dev / debugging)
-app.get('/', (req, res) => res.send('Rep Cours API running'));
-
-// ----------------- Start server only if executed directly -----------------
+// Export the app so a serverless wrapper can require it
+// Start an actual HTTP server only when executed directly (node server/server.js)
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+} else {
+  console.log('server module required — export app without listening');
 }
 
-// Export the app so serverless wrapper (api/index.js) can require it
 module.exports = app;
-
-/* small helper */
-function escapeHtml(str = '') {
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
-}
