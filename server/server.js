@@ -264,7 +264,6 @@ app.get('/api/files', async (req, res) => {
   }
 
   // --- FALLBACK (no DB) ---
-  // This makes the frontend usable in environments without Mongo (dev, quick deploys).
   const sample = [{
     _id: 'test-1',
     title: 'Exemple - ressource test',

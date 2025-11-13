@@ -46,6 +46,8 @@ et ci dessous voici mon package.json actuel :
   }
 }
 
+et je ne comprends pas pourquoi diable , meme apres qu'on ai reconstruis le server/server.js de zero ca continu de beuger pourquoi ca ne passe pas en serverless et ca me retourne encore : Erreur lors du chargement : Fetch failed for /api/files?page=1&pageSize=20 — Failed to fetch ,la ou c'est censé recuperer les donné en base  quand je deplois sur vercel 
+
 git init
 git commit -m "first commit"
 git branch -M main

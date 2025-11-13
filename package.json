@@ -2,10 +2,11 @@
   "name": "rep-cours",
   "version": "1.0.0",
   "description": "Plateforme de cours de révision et bibliothèque d'exercices (maths, physique-chimie, SVT) du collège au lycée.",
-  "main": "server/server.js",
+  "main": "api/index.js",
   "scripts": {
     "start": "node server/server.js",
     "dev": "nodemon server/server.js",
+    "dev:vercel": "vercel dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
