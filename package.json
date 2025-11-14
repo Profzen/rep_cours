@@ -1,40 +1,25 @@
 {
   "name": "rep-cours",
   "version": "1.0.0",
-  "description": "Plateforme de cours de révision et bibliothèque d'exercices (maths, physique-chimie, SVT) du collège au lycée.",
-  "main": "api/index.js",
+  "description": "Rep Cours - plateforme révisions & bibliothèque",
+  "main": "server/server.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node server/server.js",
     "dev": "nodemon server/server.js",
-    "dev:vercel": "vercel dev",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "vercel-dev": "vercel dev",
+    "test": "echo \"no tests\" && exit 0"
   },
-  "keywords": [
-    "cours",
-    "repetition",
-    "math",
-    "physique",
-    "chimie",
-    "svt",
-    "bibliothèque",
-    "examen"
-  ],
-  "author": "Ton Nom",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "cloudinary": "^2.8.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "i": "^0.3.7",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.20.0",
     "multer": "^2.0.2",
-    "nodemailer": "^7.0.10",
-    "serverless-http": "^4.0.0"
+    "nodemailer": "^7.0.10"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
   }
 }
-
