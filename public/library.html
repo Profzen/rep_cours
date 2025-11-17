@@ -74,7 +74,7 @@
     .hero-content h1 { font-size:1.9rem; color:var(--brand-1); margin:0 0 8px 0; }
     .library-hero .lead { color:var(--muted); font-weight:600; margin-bottom:8px; }
 
-    /* HERO VISUAL (carousel confined) - CORRECTION TOTALE */
+    /* HERO VISUAL (carousel confined) */
     .hero-visual,
     .hero-visual *,
     .hero-visual *::before,
@@ -166,7 +166,7 @@
         display:none;
       }
 
-      /* Menu ouvert - NOUVELLE VERSION : dropdown propre sous le header */
+      /* Menu ouvert - VERSION CORRIGEE: dropdown centré et plus compact */
       nav.main-nav.open .nav-list{
         display:flex;
         flex-direction:column;
@@ -174,12 +174,12 @@
         top:70px;
         left:50%;
         transform:translateX(-50%);
-        width:calc(100% - 32px);
-        max-width:500px;
-        padding:24px 20px;
-        gap:4px;
+        width:calc(100% - 64px); /* Plus de marge sur les côtés */
+        max-width:360px; /* Réduit de 500px à 360px */
+        padding:16px; /* Réduit de 24px à 16px */
+        gap:2px; /* Réduit de 4px à 2px */
         background: linear-gradient(135deg, rgba(59,21,88,1) 0%, rgba(47,17,72,1) 50%);
-        border-radius:16px;
+        border-radius:14px; /* Réduit de 16px à 14px */
         box-shadow:0 24px 60px rgba(8,50,91,0.4);
         z-index:9999;
         animation:slideDown 0.3s ease;
@@ -199,12 +199,12 @@
         display:block;
         width:100%;
         text-align:center;
-        padding:14px 20px;
-        font-size:1.05rem;
+        padding:12px 16px; /* Réduit de 14px à 12px */
+        font-size:1rem; /* Réduit de 1.05rem à 1rem */
         font-weight:700;
         color:rgba(255,255,255,0.95);
         background:transparent;
-        border-radius:12px;
+        border-radius:10px; /* Réduit de 12px à 10px */
         transition:all 0.2s ease;
       }
 
@@ -232,14 +232,34 @@
         to { opacity:1; }
       }
 
-      .nav-actions{ }
-      .hero-visual{width:100%;height:220px;flex:0 0 auto;order:1}
+      /* Carousel plus grand en mobile */
+      .hero-visual{
+        width:100%;
+        height:280px; /* Augmenté de 220px à 280px */
+        flex:0 0 auto;
+        order:1;
+      }
+      
       .library-inner{flex-direction:column-reverse;gap:16px}
       .filters-grid{grid-template-columns:1fr}
+      
+      /* Correction: boutons hero alignés pour supprimer l'espace blanc */
+      .hero-content .btn {
+        flex: 1 1 auto; /* Les boutons prennent tout l'espace disponible */
+        text-align: center;
+      }
+      
+      /* Le conteneur des boutons */
+      .hero-content > div[style*="display:flex"] {
+        display: flex !important;
+        gap: 10px !important;
+        margin-top: 12px !important;
+        flex-wrap: nowrap !important; /* Empêche le retour à la ligne */
+      }
     }
 
     @media (max-width:520px) {
-      .hero-visual{height:180px}
+      .hero-visual{height:240px} /* Augmenté de 180px à 240px */
       .whatsapp-fab{right:12px;bottom:12px;width:52px;height:52px}
     }
 
@@ -457,20 +477,47 @@
   <!-- client scripts -->
   <script src="js/library.js" defer></script>
 
-  <!-- nav toggle -->
+  <!-- nav toggle - VERSION CORRIGEE avec fermeture par clic sur overlay -->
   <script>
     (function(){
       const btn = document.getElementById('nav-toggle');
       const nav = document.getElementById('main-nav');
       const navList = document.getElementById('nav-list');
+      
       if(btn && nav){
-        btn.addEventListener('click', () => {
+        // Toggle au clic sur le bouton burger
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation(); // Empêche la propagation
           const open = nav.classList.toggle('open');
           btn.setAttribute('aria-expanded', open ? 'true' : 'false');
           if (!open) btn.blur();
         });
-        if(navList) navList.querySelectorAll('a').forEach(a => a.addEventListener('click', () => nav.classList.remove('open')));
+        
+        // Fermeture au clic sur les liens
+        if(navList) {
+          navList.querySelectorAll('a').forEach(a => {
+            a.addEventListener('click', () => {
+              nav.classList.remove('open');
+              btn.setAttribute('aria-expanded', 'false');
+              btn.blur();
+            });
+          });
+        }
+        
+        // Fermeture au clic sur l'overlay (en dehors du menu)
+        document.addEventListener('click', (e) => {
+          if (nav.classList.contains('open')) {
+            // Si on clique en dehors du nav et du bouton
+            if (!nav.contains(e.target) && !btn.contains(e.target)) {
+              nav.classList.remove('open');
+              btn.setAttribute('aria-expanded', 'false');
+              btn.blur();
+            }
+          }
+        });
       }
+      
+      // Fermeture avec la touche Escape
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && nav && nav.classList.contains('open')) {
           nav.classList.remove('open');

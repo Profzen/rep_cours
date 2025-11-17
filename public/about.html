@@ -76,11 +76,51 @@
     .hero-content .lead{display:inline-block;background:transparent;color:#06213a;font-weight:800;font-size:1.02rem;line-height:1.4}
     .hero-content p.description{margin-top:10px;color:var(--muted)}
 
-    /* hero visual (carousel confined) */
-    .hero-visual{flex:0 0 460px;width:460px;height:300px;border-radius:14px;overflow:hidden;box-shadow:var(--shadow-2);background:linear-gradient(180deg,#f5f9ff,#eef7ff);position:relative;min-width:260px}
-    .hero-visual .image{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;opacity:0;transform:scale(1.03);transition:opacity .48s ease,transform .48s ease}
-    .hero-visual .image.active{opacity:1;transform:scale(1)}
-    .carousel-controls{position:absolute;left:8px;right:8px;bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;z-index:30;padding:0 8px}
+    /* hero visual (carousel confined) - FIX MOBILE */
+    .hero-visual{
+      flex:0 0 460px;
+      width:460px;
+      height:300px;
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow:var(--shadow-2);
+      background:linear-gradient(180deg,#f5f9ff,#eef7ff);
+      position:relative;
+      min-width:260px;
+      display:block !important;
+      visibility:visible !important;
+    }
+    .hero-visual .image{
+      position:absolute;
+      inset:0;
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
+      opacity:0;
+      transform:scale(1.03);
+      transition:opacity .48s ease,transform .48s ease;
+      display:block !important;
+      width:100%;
+      height:100%;
+    }
+    .hero-visual .image.active{
+      opacity:1;
+      transform:scale(1);
+      z-index:1;
+    }
+    .carousel-controls{
+      position:absolute;
+      left:8px;
+      right:8px;
+      bottom:10px;
+      display:flex !important;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      z-index:30;
+      padding:0 8px;
+      visibility:visible !important;
+    }
     .carousel-indicators{display:flex;gap:8px;align-items:center;justify-content:center}
     .carousel-indicators button{width:10px;height:10px;border-radius:999px;border:0;background:rgba(255,255,255,0.7);cursor:pointer}
     .carousel-indicators button.active{background:var(--brand-2);transform:scale(1.05)}
@@ -124,13 +164,31 @@
 
     /* ====== RESPONSIVE ====== */
     @media (max-width: 980px){
-      .hero-inner{flex-direction:column;align-items:stretch}
-      .hero-visual{width:100%;height:220px;flex:0 0 auto;order:2}
-      .hero-panel{order:1}
+      .hero-inner{
+        flex-direction:column;
+        align-items:stretch;
+      }
+      
+      /* FIX PRINCIPAL: carousel prend toute la largeur en mobile */
+      .hero-visual{
+        width:100% !important;
+        max-width:100% !important;
+        flex:0 0 auto !important;
+        height:280px !important;
+        order:2;
+        display:block !important;
+        visibility:visible !important;
+        min-width:auto !important;
+      }
+      
+      .hero-panel{
+        order:1;
+        width:100%;
+      }
       .about-grid{display:block}
       .service-list{grid-template-columns:1fr}
       .nav-actions{display:none}
-      .nav-toggle{display:flex} /* show hamburger */
+      .nav-toggle{display:flex}
 
       /* MOBILE MENU: controlled, narrower, centered under header */
       nav.main-nav .nav-list{
@@ -153,7 +211,7 @@
       nav.main-nav .nav-list li{list-style:none;padding:8px 0;border-radius:8px}
       nav.main-nav .nav-list .nav-link{display:block;padding:12px 14px;text-align:center}
 
-      /* overlay to dim background when menu open (via pseudo on nav) */
+      /* overlay to dim background when menu open */
       nav.main-nav.open::after{
         content:'';
         position:fixed;
@@ -169,9 +227,40 @@
 
     @media (max-width:600px){
       .hero-content h1{font-size:1.45rem}
-      .hero-visual{height:180px}
+      
+      /* Carousel encore visible sur très petits écrans */
+      .hero-visual{
+        height:240px !important;
+        display:block !important;
+        width:100% !important;
+      }
+      
       .whatsapp-fab{right:12px;bottom:12px;width:52px;height:52px}
       .contact-icon{width:38px;height:38px}
+      
+      /* Amélioration des boutons carousel sur mobile */
+      .carousel-btn{
+        padding:8px 12px;
+        font-size:14px;
+        display:block !important;
+      }
+      
+      .carousel-indicators button{
+        width:10px;
+        height:10px;
+        display:inline-block !important;
+      }
+      
+      .carousel-indicators{
+        display:flex !important;
+      }
+    }
+    
+    /* Très petits écrans */
+    @media (max-width:400px){
+      .hero-visual{
+        height:200px;
+      }
     }
 
     /* prevent long nav items overflow */
@@ -226,9 +315,10 @@
         <p class="lead">Nous accompagnons les élèves et étudiants avec des méthodes pédagogiques éprouvées, des supports ciblés et un suivi personnalisé pour garantir des progrès rapides et durables.</p>
         <p class="description">Rep Cours propose : cours à domicile, cours en ligne, préparations intensives pour examens et concours, et encadrement universitaire.</p>
 
-        <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
+        <div style="margin-top:12px;display:flex;gap:17px;flex-wrap:wrap">
           <a class="btn primary-cta" href="contact.html">Demander un bilan gratuit</a>
-          <a class="btn" href="library.html" style="background:transparent;border:1px solid rgba(19,16,34,0.04)">Voir nos ressources</a>
+          <a class="btn" href="library.html" style="background:transparent;border:5px solid rgba(19,16,34,0.04);color: #e65045;">Voir nos ressources</a>
+          <a class="btn primary-cta" href="contact.html">Contactez nous</a>
         </div>
       </div>
 
@@ -259,6 +349,15 @@
           <div class="colored-card">Cours en ligne</div>
           <div class="colored-card">Stages intensifs</div>
         </div>
+        <br>
+        <div>
+          <h2 class="section-title">Procédures de mobilité vers d'autres pays</h2>
+          <p class="small">Nous vous accompagnons de bout en bout dans toutes vos démarches d'études à l'étranger. Que ce soit pour la procédure Campus France, les démarches d'immigration ou d'admission au Canada, en Russie, ou encore pour la candidature aux diverses bourses d'études internationales, nous vous guidons à chaque étape. 
+            <br>
+            <br>De la constitution du dossier jusqu'à la soumission finale, en passant par la préparation des entretiens et le suivi des résultats, notre équipe vous offre un soutien personnalisé pour maximiser vos chances de réussite.</p>
+            <br>
+            <a class="btn" href="https://wa.me/22897974094" style="display:block;width:max-content;margin:0 auto;background: #673b8e;border:5px solid rgba(19,16,34,0.04);color: #f8fafa; ">Commencez Maintenat</a> <br>
+        </div>
       </div>
       <div class="intro-right">
         <div class="card" style="padding:12px;">
@@ -278,7 +377,7 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20.5 3.5L3.5 20.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
               </div>
               <div>
-                <div style="font-weight:800;"><a href="https://wa.me/<TON_NUMERO>">WhatsApp</a></div>
+                <div style="font-weight:800;"><a href="https://wa.me/22897974094">WhatsApp</a></div>
                 <div class="small" style="color:var(--muted)">Message direct</div>
               </div>
             </div>
@@ -303,12 +402,12 @@
     <section class="card about-grid" style="margin-top:18px;padding:16px;">
       <div>
         <h2 class="section-title">Nos domaines d'intervention</h2>
-        <p class="small">Nous adaptons nos parcours selon le niveau, l’objectif et le profil de l’élève.</p>
+        <p class="small">Nous adaptons nos parcours selon le niveau, l'objectif et le profil de l'élève.</p>
         <div class="service-list">
           <div class="service-card"><h3>Cours à domicile</h3><p>Intervention personnalisée chez vous — sessions flexibles, méthodes pratiques et entraînement ciblé.</p></div>
           <div class="service-card"><h3>Cours en ligne</h3><p>Soutien via visioconférence, partage de ressources PDF et suivi hebdomadaire.</p></div>
-          <div class="service-card"><h3>Préparation Examens</h3><p>Stages intensifs et simulations d’épreuves pour Brevet, Bac, Probatoire.</p></div>
-          <div class="service-card"><h3>Préparation Concours</h3><p>Programmes dédiés (ENAM, EPL/ENSI) avec séries d’exercices et corrections détaillées.</p></div>
+          <div class="service-card"><h3>Préparation Examens</h3><p>Stages intensifs et simulations d'épreuves pour Brevet, Bac, Probatoire.</p></div>
+          <div class="service-card"><h3>Préparation Concours</h3><p>Programmes dédiés (ENAM, EPL/ENSI) avec séries d'exercices et corrections détaillées.</p></div>
         </div>
 
         <h3 style="margin-top:18px;">Notre méthode</h3>
@@ -317,7 +416,7 @@
         <h3 style="margin-top:14px;">Expérience & qualifications</h3>
         <ul class="small" style="margin-top:8px;padding-left:18px;">
           <li>Formateurs diplômés (Licence/Master, pédagogie)</li>
-          <li>10+ années d’expérience collective</li>
+          <li>10+ années d'expérience collective</li>
           <li>Taux de réussite prouvé et retours positifs des familles</li>
         </ul>
       </div>
@@ -325,7 +424,7 @@
       <aside>
         <div class="card" style="margin-bottom:12px;"><h3>Ce que nous offrons</h3><ul class="small" style="margin-top:8px;padding-left:18px;"><li>Soutien hebdomadaire</li><li>Stages intensifs</li><li>Corrections détaillées et fiches synthèse</li><li>Accompagnement aux concours</li></ul></div>
         <div class="card" style="margin-bottom:12px;"><h3>Témoignages</h3><div class="testimonials small"><blockquote>« Très bonnes méthodes — 2 points de moyenne gagnés en 3 mois. » — Élève 1ère</blockquote><blockquote>« Suivi sérieux, explications claires. » — Parent</blockquote></div></div>
-        <div class="card"><h3>Contact rapide</h3><p class="small">Email : <a href="mailto:profzzen@gmail.com">profzzen@gmail.com</a></p><p class="small">WhatsApp : <a href="https://wa.me/<TON_NUMERO>">Envoyer un message</a></p></div>
+        <div class="card"><h3>Contact rapide</h3><p class="small">Email : <a href="mailto:profzzen@gmail.com">profzzen@gmail.com</a></p><p class="small">WhatsApp : <a href="https://wa.me/22897974094">Envoyer un message</a></p></div>
       </aside>
     </section>
 
@@ -344,7 +443,7 @@
   </main>
 
   <!-- WHATSAPP FLOAT -->
-  <a href="https://wa.me/<TON_NUMERO>" id="whatsapp-fab" class="whatsapp-fab" target="_blank" rel="noopener" aria-label="Contacter sur WhatsApp">
+  <a href="https://wa.me/22897974094" id="whatsapp-fab" class="whatsapp-fab" target="_blank" rel="noopener" aria-label="Contacter sur WhatsApp">
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20.52 3.48A11.94 11.94 0 0012 0C5.373 0 .063 5.31.063 11.94c0 2.106.55 4.16 1.593 5.977L0 24l6.354-1.66A11.93 11.93 0 0012 23.88c6.627 0 11.941-5.313 11.941-11.94 0-3.19-1.246-6.19-3.42-8.46z" fill="#25D366"/><path d="M17.36 14.64c-.3-.15-1.77-.87-2.05-.97-.28-.1-.48-.15-.69.15-.21.3-.81.97-.99 1.17-.18.2-.36.22-.66.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.18-.3-.02-.46.13-.61.14-.14.3-.36.45-.54.15-.18.2-.3.3-.5.1-.2 0-.37-.05-.52-.05-.15-.69-1.67-.95-2.28-.25-.6-.5-.52-.69-.52-.18 0-.4-.02-.61-.02-.2 0-.52.07-.8.37-.28.3-1.05 1.02-1.05 2.48 0 1.46 1.08 2.87 1.23 3.07.15.2 2.11 3.22 5.11 4.52 3 1.3 3 0.86 3.51 0.81.5-.05 1.62-.66 1.85-1.3.23-.64.23-1.18.16-1.3-.07-.12-.28-.18-.58-.33" fill="#fff"/></svg>
   </a>
 
