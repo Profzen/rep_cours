@@ -1,52 +1,47 @@
-// public/js/contact.js
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('contactForm');
-  const resetBtn = document.getElementById('resetBtn');
-  const statusEl = document.getElementById('formStatus');
+// api/contact.js
+'use strict';
 
-  function setStatus(msg, ok=true) {
-    statusEl.textContent = msg;
-    statusEl.style.color = ok ? '#064E3B' : '#B91C1C';
-  }
+const { connectMongoOnce, sendMail, CONTACT_RECEIVER, escapeHtml } = require('./_utils');
 
-  resetBtn && resetBtn.addEventListener('click', () => {
-    form.reset();
-    setStatus('');
-  });
+module.exports = async (req, res) => {
+  try {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    setStatus('Envoi en cours...', true);
+    const { name, email, subject, message } = req.body || {};
+    if (!name || !email || !message) return res.status(400).json({ error: 'Missing fields' });
 
-    // Simple client-side validation
-    const fd = new FormData(form);
-    const data = {
-      name: (fd.get('name') || '').trim(),
-      email: (fd.get('email') || '').trim(),
-      subject: (fd.get('subject') || '').trim(),
-      message: (fd.get('message') || '').trim()
-    };
-    if (!data.name || !data.email || !data.message) {
-      setStatus('Veuillez renseigner votre nom, email et message.', false);
-      return;
+    const c = await connectMongoOnce();
+    if (!c || !c.collections || !c.collections.contacts) {
+      // No DB available; log and continue
+      console.warn('contact: DB not available, skipping save');
+    } else {
+      await c.collections.contacts.insertOne({ name, email, subject: subject || '', message, receivedAt: new Date() });
     }
+
+    const mailOptions = {
+      from: `"Rep Cours" <${process.env.SMTP_USER || 'no-reply@example.com'}>`,
+      to: CONTACT_RECEIVER || process.env.CONTACT_RECEIVER || 'profzzen@gmail.com',
+      subject: `Nouveau message contact - ${name} ${subject ? '— ' + subject : ''}`,
+      text: `Message reçu de ${name} <${email}>:\n\n${message}`,
+      html: `<p>Message reçu de <strong>${escapeHtml(name)}</strong> &lt;${escapeHtml(email)}&gt; :</p><p>${escapeHtml(message).replace(/\n/g,'<br>')}</p>`
+    };
 
     try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      const j = await res.json();
-      if (!res.ok) {
-        setStatus('Erreur : ' + (j?.error || 'Impossible d’envoyer le message.'), false);
-        return;
+      const result = await sendMail(mailOptions);
+      // If using ethereal, return preview URL for debugging
+      if (result && result.preview) {
+        return res.json({ ok: true, previewUrl: result.preview });
       }
-      setStatus('✅ Message envoyé — nous revenons vers vous rapidement.');
-      form.reset();
-    } catch (err) {
-      console.error(err);
-      setStatus('Erreur réseau — vérifiez votre connexion.', false);
+      return res.json({ ok: true });
+    } catch (mailErr) {
+      console.error('contact sendMail error', mailErr && mailErr.message ? mailErr.message : mailErr);
+      // return the error to client in dev, but don't leak sensitive details in prod
+      const isDev = (process.env.NODE_ENV !== 'production');
+      return res.status(502).json({ error: 'Failed to send email', details: isDev ? (mailErr && (mailErr.message || mailErr.code || mailErr)) : undefined });
     }
-  });
-});
+
+  } catch (err) {
+    console.error('api/contact error', err && err.message ? err.message : err);
+    return res.status(500).json({ error: 'Impossible d\'envoyer le message' });
+  }
+};

@@ -23,16 +23,97 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
 
-// Nodemailer transporter (may be no-op if creds not set)
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || '',
-  port: Number(process.env.SMTP_PORT || 465),
-  secure: (String(process.env.SMTP_SECURE || '') === 'true') || Number(process.env.SMTP_PORT || 465) === 465,
-  auth: {
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASS || ''
+// Build transporter factory so we can verify and fallback to Ethereal for debug
+let transporter = null;
+let transporterInfo = { usingEthereal: false, configured: false, details: null };
+
+async function createTransporter() {
+  // if already created, return it
+  if (transporter) return transporter;
+
+  const host = (process.env.SMTP_HOST || '').trim();
+  const port = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined;
+  const user = (process.env.SMTP_USER || '').trim();
+  const pass = (process.env.SMTP_PASS || '').trim();
+  const secureEnv = String(process.env.SMTP_SECURE || '').toLowerCase();
+  const secure = secureEnv === 'true' || secureEnv === '1' || (port === 465);
+
+  if (host && user && pass) {
+    // create real transporter
+    transporter = nodemailer.createTransport({
+      host,
+      port: port || (secure ? 465 : 587),
+      secure: !!secure,
+      auth: { user, pass },
+      // helpful when some providers use self-signed certs; keep commented unless needed
+      // tls: { rejectUnauthorized: false }
+    });
+    transporterInfo.configured = true;
+    transporterInfo.usingEthereal = false;
+    transporterInfo.details = { host, port: port || (secure ? 465 : 587), secure, user: user.replace(/.(?=.{2,}@)/g,'*') };
+
+    // verify transporter right away (best-effort)
+    try {
+      await transporter.verify();
+      console.log('✅ SMTP transporter verified:', transporterInfo.details);
+    } catch (e) {
+      console.error('❌ SMTP transporter verification failed:', e && e.message ? e.message : e);
+      // keep transporter (we still attempt sendMail to collect detailed errors)
+    }
+    return transporter;
   }
-});
+
+  // No SMTP creds provided — create Ethereal account for local debug (not for prod)
+  try {
+    const testAccount = await nodemailer.createTestAccount();
+    transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: { user: testAccount.user, pass: testAccount.pass }
+    });
+    transporterInfo.configured = true;
+    transporterInfo.usingEthereal = true;
+    transporterInfo.details = { host: 'smtp.ethereal.email', user: testAccount.user };
+    console.warn('⚠️ No SMTP credentials provided — using Ethereal test account (debug only). See nodemailer test URL in logs.');
+    return transporter;
+  } catch (ethErr) {
+    console.error('❌ Failed to create Ethereal test account:', ethErr && ethErr.message ? ethErr.message : ethErr);
+    // leave transporter null -> callers should handle it
+    transporter = null;
+    transporterInfo.configured = false;
+    transporterInfo.usingEthereal = false;
+    transporterInfo.details = null;
+    return null;
+  }
+}
+
+// helper to send mail with good logging and fallback
+async function sendMail(mailOptions) {
+  const t = await createTransporter();
+  if (!t) {
+    const err = new Error('No mail transporter available');
+    err.code = 'NO_TRANSPORTER';
+    throw err;
+  }
+
+  try {
+    const info = await t.sendMail(mailOptions);
+    // If using ethereal, log preview url
+    if (transporterInfo.usingEthereal && nodemailer.getTestMessageUrl) {
+      const preview = nodemailer.getTestMessageUrl(info);
+      console.log('📨 Email sent (ethereal) preview URL:', preview);
+      return { info, preview };
+    }
+    console.log('📨 Email sent:', info && info.messageId ? info.messageId : info);
+    return { info };
+  } catch (err) {
+    // Attach some diagnostic details
+    console.error('❌ sendMail error:', err && err.message ? err.message : err);
+    err._transporterInfo = transporterInfo;
+    throw err;
+  }
+}
 
 // Mongo connection cache
 let _mongoClient = null;
@@ -105,7 +186,10 @@ module.exports = {
   signAdminToken,
   verifyAdminTokenFromHeader,
   cloudinary,
-  transporter,
+  // expose sendMail helper and transporter info
+  sendMail,
+  createTransporter,
+  transporterInfo,
   ADMIN_USER,
   ADMIN_PASS,
   CONTACT_RECEIVER,
